@@ -9,8 +9,7 @@
   </head>
   <body data-page="compte">
     <div class="app">
-      @include('header-manager')
-     
+      
 
       <main class="container compte-page">
         <header class="compte-hero">

@@ -21,6 +21,11 @@ class ClientController extends Controller
         return view('parcelles');
     }
 
+    // Affiche la gestion des stocks du client
+    public function stocks() {
+        return view('stocks');
+    }
+
     // Affiche le profil et les informations du compte
     public function compte() {
         return view('compte');

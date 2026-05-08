@@ -26,3 +26,4 @@ class ManagementController extends Controller
         return view('supervision');
     }
 }
+

@@ -59,6 +59,9 @@ Route::prefix('client')->group(function () {
     
     // Gestion des Parcelles (parcelles.html)
     Route::get('/parcelles', [ClientController::class, 'parcelles'])->name('client.parcelles');
+
+    // Gestion des Stocks (stocks.html)
+    Route::get('/stocks', [ClientController::class, 'stocks'])->name('client.stocks');
     
     // Profil & Compte Client (compte.html)
     Route::get('/mon-compte', [ClientController::class, 'compte'])->name('client.compte');

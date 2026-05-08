@@ -23,7 +23,7 @@
           <h1>SeneBI: Business Intelligence Agricole Mali</h1>
           <p class="login-subtitle">Votre plateforme de gestion securisee</p>
 
-          <form method="POST" action="{{ url('/login-manager') }}" class="auth-form">
+          <form id="loginForm" method="POST" action="{{ url('/login-manager') }}" class="auth-form">
             @csrf
             
             @if ($errors->any())
