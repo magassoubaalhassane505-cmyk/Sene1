@@ -198,17 +198,26 @@
 
     const stockTableBody = SeneBI.qs("#stockTableBody");
     if (stockTableBody) {
+      const intrants = window.SeneBI_SERVER?.intrants || {};
       stockTableBody.innerHTML = stockRows
         .map((row) => {
           const level = pct(row.value, row.threshold);
           const ok = row.value > row.threshold;
+          
+          // Récupérer le prix dynamique depuis la table intrants
+          let cost = row.cost;
+          const intrantKey = Object.keys(intrants).find(key => row.name.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(row.name.toLowerCase()));
+          if (intrantKey && intrants[intrantKey]) {
+            cost = intrants[intrantKey].prix;
+          }
+          
           return `
             <tr>
               <td><strong>${row.name}</strong></td>
               <td><span class="stock-type">${row.type}</span></td>
               <td>${row.value} ${row.type === "Engrais" ? "sac" : "kg"}</td>
               <td>${row.threshold} ${row.type === "Engrais" ? "sac" : "kg"}</td>
-              <td>${row.cost.toLocaleString("fr-FR")} FCFA</td>
+              <td>${cost.toLocaleString("fr-FR")} FCFA</td>
               <td class="${ok ? "status-ok" : "status-bad"}">${ok ? `OK (${level}%)` : `Critique (${level}%)`}</td>
             </tr>
           `;
@@ -361,6 +370,7 @@
     render(state, readOnly);
     window.addEventListener("senebi:seasonChanged", () => {
       SeneBI.renderTopbar(state);
+  });
   });
 
 // FONCTION SUPPRIMÉE - RETOUR À L'ÉTAT ORIGINAL
@@ -555,215 +565,87 @@ setTimeout(initStockFilters, 200);
     intrantSelect.addEventListener("change", calculateNeeds);
   }
 
-  // Dynamisme du Formulaire "Déclarer une consommation"
-  function initConsumeForm() {
-    console.log("=== DÉBUT INITIALISATION FORMULAIRE CONSOMMATION ===");
+  // Fonction pour mettre à jour le graphique global
+  function updateGlobalGauge() {
+    const canvas = SeneBI.qs("#stockGaugeChart");
+    if (!canvas || !window.Chart) return;
     
-    // Vérifier si la fonction SeneBI.qs existe
-    console.log("SeneBI.qs existe:", typeof SeneBI.qs);
+    const chart = Chart.getChart(canvas);
+    if (!chart) return;
     
-    const consumeParcel = SeneBI.qs("#consumeParcel");
-    const consumeForm = SeneBI.q("#consumeForm");
+    // Récupérer les nouvelles données du tableau
+    const stockRows = document.querySelectorAll("#stockTableBody tr");
+    let totalStock = 0;
+    let totalCapacity = 0;
     
-    console.log("consumeParcel trouvé:", !!consumeParcel);
-    console.log("consumeForm trouvé:", !!consumeForm);
-    
-    if (!consumeParcel) {
-      console.error("ERREUR: #consumeParcel non trouvé!");
-      return;
-    }
-    
-    if (!consumeForm) {
-      console.error("ERREUR: #consumeForm non trouvé!");
-      return;
-    }
-    
-    console.log("Éléments trouvés avec succès");
-    console.log("consumeParcel tagName:", consumeParcel.tagName);
-    console.log("consumeParcel options avant:", consumeParcel.options.length);
-
-    // Remplir automatiquement le menu déroulant des parcelles
-    const parcels = [
-      "Parcelle Nord",
-      "Parcelle Sud", 
-      "Parcelle Est",
-      "Parcelle Ouest"
-    ];
-
-    console.log("Remplissage du menu déroulant avec les parcelles:", parcels);
-
-    // Vider et remplir le menu déroulant
-    consumeParcel.innerHTML = "";
-    
-    // Ajouter l'option par défaut
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = "Choisir une parcelle";
-    defaultOption.selected = true;
-    consumeParcel.appendChild(defaultOption);
-    
-    // Ajouter les parcelles
-    parcels.forEach(parcel => {
-      const option = document.createElement("option");
-      option.value = parcel;
-      option.textContent = parcel;
-      consumeParcel.appendChild(option);
-      console.log("Option ajoutée:", parcel);
+    stockRows.forEach(row => {
+      const stockCell = row.cells[2]; // Stock Actuel
+      const stockValue = parseInt(stockCell.textContent.replace(/[^\d]/g, '')) || 0;
+      totalStock += stockValue;
+      
+      // Estimer la capacité (simulé)
+      totalCapacity += 1000; // Valeur fixe pour simplifier
     });
-
-    // Appliquer le même style que le menu Région
-    const regionSelect = SeneBI.qs("#consumeRegion");
-    if (regionSelect) {
-      const computedStyle = window.getComputedStyle(regionSelect);
-      consumeParcel.style.width = computedStyle.width;
-      consumeParcel.style.padding = computedStyle.padding;
-      consumeParcel.style.border = computedStyle.border;
-      consumeParcel.style.borderRadius = computedStyle.borderRadius;
-      consumeParcel.style.fontSize = computedStyle.fontSize;
-      consumeParcel.style.backgroundColor = computedStyle.backgroundColor;
-      console.log("Style appliqué depuis le menu Région");
-    }
     
-    console.log("Menu déroulant rempli. Nombre d'options:", consumeParcel.options.length);
-    console.log("Options après remplissage:");
-    for (let i = 0; i < consumeParcel.options.length; i++) {
-      console.log(`  Option ${i}: "${consumeParcel.options[i].textContent}" (value: "${consumeParcel.options[i].value}")`);
-    }
-
-    // Ajouter un écouteur pour tester la sélection
-    consumeParcel.addEventListener("change", function() {
-      console.log("Parcelle sélectionnée:", this.value);
-    });
-
-    // Gérer la soumission du formulaire - MOTEUR COMPLET
-    consumeForm.addEventListener("submit", function(e) {
-      console.log("🟢 BOUTON ENREGISTRER CLIQUÉ !");
-      e.preventDefault();
-      
-      // 1. CAPTURE DES DONNÉES
-      const parcelle = consumeParcel.value;
-      const intrant = SeneBI.qs("#consumeItem")?.value || "NON TROUVÉ";
-      const quantite = parseFloat(SeneBI.qs("#consumeQty")?.value) || 0;
-      const date = new Date().toLocaleDateString('fr-FR');
-      
-      console.log("📊 DONNÉES CAPTURÉES:", { parcelle, intrant, quantite, date });
-      
-      // Validation
-      if (!parcelle || !intrant || quantite <= 0) {
-        console.log("❌ VALIDATION ÉCHOUÉE");
-        showNotification("Veuillez remplir tous les champs", "error");
-        return;
-      }
-      
-      console.log("✅ VALIDATION RÉUSSIE - DÉMARRAGE DU MOTEUR COMPLET");
-      
-      // 2. MISE À JOUR DU TABLEAU
-      console.log("2️⃣ MISE À JOUR DU TABLEAU DES STOCKS...");
-      updateStockTable(intrant, quantite);
-      console.log("✅ Tableau mis à jour avec statut recalculé");
-      
-      // 3. SYNCHRONISATION DES GRAPHIQUES
-      console.log("3️⃣ SYNCHRONISATION DES GRAPHIQUES...");
-      updateChartAfterConsumption(intrant, quantite); // Barre verte
-      updateGlobalGauge(); // Pourcentage global
-      console.log("✅ Graphiques synchronisés");
-      
-      // 4. HISTORISATION
-      console.log("4️⃣ HISTORISATION DE LA CONSOMMATION...");
-      addToConsumptionHistory(parcelle, intrant, quantite, date);
-      console.log("✅ Historique mis à jour");
-      
-      // 5. EFFETS VISUELS ET NETTOYAGE
-      console.log("5️⃣ NOTIFICATION PERSONNALISÉE...");
-      showNotification(`Consommation enregistrée sur la ${parcelle}`);
-      console.log("✅ Notification affichée");
-      
-      console.log("6️⃣ NETTOYAGE DU FORMULAIRE...");
-      consumeForm.reset();
-      console.log("✅ Formulaire réinitialisé");
-      
-      console.log("🎉 MOTEUR COMPLET TERMINÉ !");
-    });
-
-    // Fonction pour mettre à jour le graphique global
-    function updateGlobalGauge() {
-      const canvas = SeneBI.qs("#stockGaugeChart");
-      if (!canvas || !window.Chart) return;
-      
-      const chart = Chart.getChart(canvas);
-      if (!chart) return;
-      
-      // Récupérer les nouvelles données du tableau
-      const stockRows = document.querySelectorAll("#stockTableBody tr");
-      let totalStock = 0;
-      let totalCapacity = 0;
-      
-      stockRows.forEach(row => {
-        const stockCell = row.cells[2]; // Stock Actuel
-        const stockValue = parseInt(stockCell.textContent.replace(/[^\d]/g, '')) || 0;
-        totalStock += stockValue;
-        
-        // Estimer la capacité (simulé)
-        totalCapacity += 1000; // Valeur fixe pour simplifier
-      });
-      
-      const pct = totalCapacity > 0 ? Math.min(100, Math.round((totalStock / totalCapacity) * 100)) : 0;
-      const rest = Math.max(0, 100 - pct);
-      
-      // Mettre à jour le graphique
-      chart.data.datasets[0].data = [pct, rest];
-      chart.update('active');
-      
-      // Mettre à jour le pourcentage affiché
-      const pctEl = SeneBI.qs("#stockGaugePct");
-      if (pctEl) pctEl.textContent = `${pct}%`;
-      
-      console.log(`📊 Graphique global mis à jour: ${pct}%`);
-    }
-
-    // Fonction pour ajouter à l'historique des consommations
-    function addToConsumptionHistory(parcelle, intrant, quantite, date) {
-      const historyList = SeneBI.qs("#consumptionList");
-      if (!historyList) return;
-      
-      // Créer la nouvelle carte d'historique
-      const historyCard = document.createElement("div");
-      historyCard.className = "history-item";
-      historyCard.style.cssText = `
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        animation: slideInRight 0.3s ease;
-      `;
-      
-      historyCard.innerHTML = `
-        <div>
-          <div style="font-weight: 600; color: #1a1d23;">${parcelle}</div>
-          <div style="font-size: 12px; color: #64748b;">${date}</div>
-        </div>
-        <div style="text-align: right;">
-          <div style="font-weight: 600; color: #10b981;">${quantite.toLocaleString('fr-FR')} kg</div>
-          <div style="font-size: 11px; color: #64748b;">${intrant}</div>
-        </div>
-      `;
-      
-      // Ajouter au début de la liste
-      historyList.insertBefore(historyCard, historyList.firstChild);
-      
-      // Limiter à 5 éléments les plus récents
-      const items = historyList.querySelectorAll(".history-item");
-      if (items.length > 5) {
-        items[items.length - 1].remove();
-      }
-      
-      console.log(`📝 Historique ajouté: ${parcelle} - ${quantite} kg de ${intrant}`);
-    }
+    const pct = totalCapacity > 0 ? Math.min(100, Math.round((totalStock / totalCapacity) * 100)) : 0;
+    const rest = Math.max(0, 100 - pct);
+    
+    // Mettre à jour le graphique
+    chart.data.datasets[0].data = [pct, rest];
+    chart.update('active');
+    
+    // Mettre à jour le pourcentage affiché
+    const pctEl = SeneBI.qs("#stockGaugePct");
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    
+    console.log(`📊 Graphique global mis à jour: ${pct}%`);
   }
+
+  // Fonction pour ajouter à l'historique des consommations
+  function addToConsumptionHistory(parcelle, intrant, quantite, date) {
+    const historyList = SeneBI.qs("#consumptionList");
+    if (!historyList) return;
+    
+    // Créer la nouvelle carte d'historique
+    const historyCard = document.createElement("div");
+    historyCard.className = "history-item";
+    historyCard.style.cssText = `
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: slideInRight 0.3s ease;
+    `;
+    
+    historyCard.innerHTML = `
+      <div>
+        <div style="font-weight: 600; color: #1a1d23;">${parcelle}</div>
+        <div style="font-size: 12px; color: #64748b;">${date}</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 600; color: #10b981;">${quantite.toLocaleString('fr-FR')} kg</div>
+        <div style="font-size: 11px; color: #64748b;">${intrant}</div>
+      </div>
+    `;
+    
+    // Ajouter au début de la liste
+    historyList.insertBefore(historyCard, historyList.firstChild);
+    
+    // Limiter à 5 éléments les plus récents
+    const items = historyList.querySelectorAll(".history-item");
+    if (items.length > 5) {
+      items[items.length - 1].remove();
+    }
+    
+    console.log(`📝 Historique ajouté: ${parcelle} - ${quantite} kg de ${intrant}`);
+  }
+
+  // Dynamisme du Formulaire "Déclarer une consommation"
+  // Géré par stocks-consumption.js pour éviter les doublons
 
   // Fonction pour afficher la notification
   function showNotification(message, type = "success") {
@@ -832,6 +714,72 @@ setTimeout(initStockFilters, 200);
     }
   }
 
+  // Fonction pour mettre à jour le tableau des stocks depuis la réponse backend
+  function updateStockTableFromBackend(stockData) {
+    const stockRows = document.querySelectorAll("#stockTableBody tr");
+    
+    stockRows.forEach(row => {
+      const nameCell = row.cells[0]?.textContent;
+      if (nameCell === stockData.nom) {
+        const stockCell = row.cells[2]; // Colonne "Stock Actuel"
+        const thresholdCell = row.cells[3]; // Colonne "Seuil Critique"
+        const statusCell = row.cells[5]; // Colonne "Statut"
+        
+        // Mettre à jour le stock avec la valeur du backend
+        stockCell.textContent = `${stockData.quantite_actuelle.toLocaleString("fr-FR")} kg`;
+        
+        // Mettre à jour le seuil critique
+        thresholdCell.textContent = `${stockData.seuil_critique.toLocaleString("fr-FR")} kg`;
+        
+        // Mettre à jour le statut selon si c'est critique
+        if (stockData.est_critique) {
+          statusCell.innerHTML = `<span class="badge red">CRITIQUE</span>`;
+          console.log(`🚨 STATUT CRITIQUE: ${stockData.nom} - Stock: ${stockData.quantite_actuelle} kg, Seuil: ${stockData.seuil_critique} kg`);
+        } else {
+          const pourcentage = Math.round((stockData.quantite_actuelle / stockData.seuil_critique) * 100);
+          statusCell.innerHTML = `<span class="badge green">OK (${pourcentage}%)</span>`;
+          console.log(`✅ STATUT OK: ${stockData.nom} - Stock: ${stockData.quantite_actuelle} kg (${pourcentage}%)`);
+        }
+      }
+    });
+    
+    // Après la mise à jour, vérifier tous les seuils
+    setTimeout(checkAllThresholds, 100);
+  }
+
+  // Fonction pour mettre à jour le tableau des stocks depuis la réponse backend
+  function updateStockTableFromBackend(stockData) {
+    const stockRows = document.querySelectorAll("#stockTableBody tr");
+    
+    stockRows.forEach(row => {
+      const nameCell = row.cells[0]?.textContent;
+      if (nameCell === stockData.nom) {
+        const stockCell = row.cells[2]; // Colonne "Stock Actuel"
+        const thresholdCell = row.cells[3]; // Colonne "Seuil Critique"
+        const statusCell = row.cells[5]; // Colonne "Statut"
+        
+        // Mettre à jour le stock avec la valeur du backend
+        stockCell.textContent = `${stockData.quantite_actuelle.toLocaleString("fr-FR")} kg`;
+        
+        // Mettre à jour le seuil critique
+        thresholdCell.textContent = `${stockData.seuil_critique.toLocaleString("fr-FR")} kg`;
+        
+        // Mettre à jour le statut selon si c'est critique
+        if (stockData.est_critique) {
+          statusCell.innerHTML = `<span class="badge red">CRITIQUE</span>`;
+          console.log(`🚨 STATUT CRITIQUE: ${stockData.nom} - Stock: ${stockData.quantite_actuelle} kg, Seuil: ${stockData.seuil_critique} kg`);
+        } else {
+          const pourcentage = Math.round((stockData.quantite_actuelle / stockData.seuil_critique) * 100);
+          statusCell.innerHTML = `<span class="badge green">OK (${pourcentage}%)</span>`;
+          console.log(`✅ STATUT OK: ${stockData.nom} - Stock: ${stockData.quantite_actuelle} kg (${pourcentage}%)`);
+        }
+      }
+    });
+    
+    // Après la mise à jour, vérifier tous les seuils
+    setTimeout(checkAllThresholds, 100);
+  }
+
   // Fonction pour mettre à jour le tableau des stocks avec recalcul du statut
   function updateStockTable(intrant, quantite) {
     const stockRows = document.querySelectorAll("#stockTableBody tr");
@@ -850,6 +798,28 @@ setTimeout(initStockFilters, 200);
     
     // Après la mise à jour, vérifier tous les seuils
     setTimeout(checkAllThresholds, 100);
+  }
+
+  // Fonction pour simuler la baisse dans le graphique
+  function updateChartAfterConsumption(intrant, quantite) {
+    const canvas = document.querySelector("#stockChart");
+    if (!canvas || !window.Chart) return;
+    
+    const chart = Chart.getChart(canvas);
+    if (!chart) return;
+    
+    // Trouver l'index de l'intrant dans le graphique
+    const labels = chart.data.labels;
+    const index = labels.findIndex(label => 
+      label.toLowerCase().includes(intrant.toLowerCase())
+    );
+    
+    if (index !== -1) {
+      // Réduire la valeur dans le graphique
+      const currentValue = chart.data.datasets[0].data[index];
+      chart.data.datasets[0].data[index] = Math.max(0, currentValue - quantite);
+      chart.update('active'); // Animation fluide
+    }
   }
 
   // Fonction pour vérifier tous les seuils et mettre à jour les statuts
@@ -937,45 +907,5 @@ setTimeout(initStockFilters, 200);
     console.log("🚀 DÉMARRAGE VÉRIFICATION DES SEUILS...");
     checkAllThresholds();
   }, 500);
-  
-  // Test : changer manuellement le stock de Semence Coton à 25 kg pour vérifier l'alerte
-  setTimeout(() => {
-    console.log("🧪 TEST: Changement de Semence Coton à 25 kg pour vérifier l'alerte rouge...");
-    const stockRows = document.querySelectorAll("#stockTableBody tr");
-    
-    console.log("📊 Nombre de lignes trouvées:", stockRows.length);
-    
-    stockRows.forEach((row, index) => {
-      const nameCell = row.cells[0]?.textContent;
-      console.log(`📋 Ligne ${index}: "${nameCell}"`);
-      
-      if (nameCell === "Semence Coton") {
-        const stockCell = row.cells[2]; // Colonne "Stock Actuel"
-        const thresholdCell = row.cells[3]; // Colonne "Seuil Critique"
-        const statusCell = row.cells[5]; // Colonne "Statut"
-        
-        console.log("🔍 AVANT CHANGEMENT:");
-        console.log("  Stock actuel:", stockCell?.textContent);
-        console.log("  Seuil critique:", thresholdCell?.textContent);
-        console.log("  Statut actuel:", statusCell?.innerHTML);
-        
-        stockCell.textContent = "25 kg"; // Changement manuel pour test
-        console.log("🧪 Semence Coton changée à 25 kg - Vérification de l'alerte...");
-        
-        // Lancer la vérification des seuils
-        setTimeout(() => {
-          console.log("🔄 LANCEMENT VÉRIFICATION APRÈS CHANGEMENT...");
-          checkAllThresholds();
-          
-          // Vérifier le résultat
-          setTimeout(() => {
-            console.log("🔍 APRÈS VÉRIFICATION:");
-            console.log("  Stock actuel:", stockCell?.textContent);
-            console.log("  Statut final:", statusCell?.innerHTML);
-          }, 200);
-        }, 100);
-      }
-    });
-  }, 1000);
 })();
 

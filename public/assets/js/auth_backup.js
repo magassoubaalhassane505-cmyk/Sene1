@@ -186,6 +186,12 @@
           </div>
           <div class="user-role-cell">${roleTag}</div>
           <div class="user-toolbar" role="toolbar" aria-label="Actions sur ce compte">
+            <div class="toolbar-group">
+              <button class="tool-btn tool-btn--neutral" type="button" data-action="reset-pass" data-id="${u.id}">
+                Régénérer l’accès
+              </button>
+            </div>
+            <div class="toolbar-sep" aria-hidden="true"></div>
             <div class="toolbar-group toolbar-group--risk">
               <button class="tool-btn tool-btn--warn" type="button" data-action="toggle-block" data-id="${u.id}">
                 ${u.blocked ? "Débloquer" : "Bloquer"}
@@ -287,10 +293,6 @@
             renderAdminStats(current);
             form.reset();
             setFeedback(feedback, `Compte cree. Acces genere: ${email} / ${password}`, false);
-            // Recharger la page pour mettre à jour la liste des clients dans le formulaire de visite
-            if (document.body.dataset.serverSide === '1') {
-              setTimeout(() => location.reload(), 1000);
-            }
           });
         }
         if (list && !list.dataset.bound) {
@@ -317,36 +319,11 @@
               return;
             }
             if (action === "delete") {
-              if (document.body.dataset.serverSide === '1') {
-                // Server-side auth - call API to delete user
-                fetch(`/manager/users/${id}`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                  }
-                })
-                .then(response => response.json())
-                .then(result => {
-                  if (result.success) {
-                    setFeedback(feedback, result.message, false);
-                    // Recharger la page pour mettre à jour la liste des clients
-                    setTimeout(() => location.reload(), 1000);
-                  } else {
-                    setFeedback(feedback, result.error || "Erreur lors de la suppression.", true);
-                  }
-                })
-                .catch(error => {
-                  setFeedback(feedback, "Erreur: " + error.message, true);
-                });
-              } else {
-                // Local auth - delete from localStorage
-                current.splice(idx, 1);
-                saveUsers(current);
-                renderUsersList(current);
-                renderAdminStats(current);
-                setFeedback(feedback, "Compte supprime avec succes.", false);
-              }
+              current.splice(idx, 1);
+              saveUsers(current);
+              renderUsersList(current);
+              renderAdminStats(current);
+              setFeedback(feedback, "Compte supprime avec succes.", false);
               return;
             }
             if (action === "reset-pass") {

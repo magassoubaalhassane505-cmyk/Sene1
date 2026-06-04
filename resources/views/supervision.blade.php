@@ -307,6 +307,19 @@
     <script src="{{ asset('assets/js/core.js') }}"></script>
     <script src="{{ asset('assets/js/auth.js') }}"></script>
     <script src="{{ asset('assets/js/supervision.js') }}"></script>
+
+    <script>
+      // Passer les clients actifs au JavaScript
+      window.SeneBI = window.SeneBI || {};
+      window.SeneBI.activeClients = {{ \Illuminate\Support\Js::from(
+        $activeClients->map(fn($client) => [
+          'id' => $client->id,
+          'name' => $client->name,
+          'location' => $client->location ?? 'Non spécifié',
+          'email' => $client->email,
+        ])->values()
+      ) }};
+    </script>
     
     <!-- Modal de rejet -->
     <div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">

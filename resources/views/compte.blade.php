@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/base.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/compte.css') }}" />
   </head>
-  <body data-page="compte">
+  <body data-page="compte" data-server-side="1">
     <div class="app">
       @include('header-manager')
       

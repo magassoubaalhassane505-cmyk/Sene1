@@ -61,6 +61,11 @@ class User extends Authenticatable
         return $this->hasMany(Visite::class)->orderByDesc('date_visite');
     }
 
+    public function recoltes(): HasMany
+    {
+        return $this->hasMany(Recolte::class);
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

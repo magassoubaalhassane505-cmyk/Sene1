@@ -80,6 +80,7 @@
                     <option>NPK</option>
                     <option>Semence Maïs</option>
                     <option>Semence Coton</option>
+                    <option>Semence Riz</option>
                   </select>
                 </div>
                 <div class="field">
@@ -161,12 +162,13 @@
         csrf: @json(csrf_token()),
         apiBase: @json(url('/client/api')),
         stocks: @json($stocks),
+        intrants: @json($intrants),
       };
     </script>
     <script src="{{ asset('assets/js/layout.js') }}"></script>
     <script src="{{ asset('assets/js/core.js') }}"></script>
     <script src="{{ asset('assets/js/stocks-db-sync.js') }}"></script>
-    <script src="{{ asset('assets/js/stocks.js') }}"></script>
+    <script src="{{ asset('assets/js/stocks-consumption.js') }}"></script>
     
     <script>
       // Corriger le header pour qu'il soit identique aux autres pages

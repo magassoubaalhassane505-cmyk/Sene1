@@ -43,111 +43,60 @@
   }
 
   function updateFarmersDirectory() {
-    const farmers = [
-      { 
-        name: "Mamadou Diallo", 
-        location: "Bamako", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        riskLevel: "Élevé",
-        riskClass: "risk-high",
-        lastActivity: "Il y a 2 heures"
-      },
-      { 
-        name: "Aminata Touré", 
-        location: "Sikasso", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        riskLevel: "Faible",
-        riskClass: "risk-low",
-        lastActivity: "Il y a 5 heures"
-      },
-      { 
-        name: "Bakary Camara", 
-        location: "Kayes", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        riskLevel: "Modéré",
-        riskClass: "risk-medium",
-        lastActivity: "Il y a 1 jour"
-      },
-      { 
-        name: "Fatoumata Konaté", 
-        location: "Koulikoro", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        riskLevel: "Élevé",
-        riskClass: "risk-high",
-        lastActivity: "Il y a 3 jours"
-      },
-      { 
-        name: "Ibrahim Bamba", 
-        location: "Mopti", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        riskLevel: "Faible",
-        riskClass: "risk-low",
-        lastActivity: "Il y a 1 semaine"
-      },
-      { 
-        name: "Mariam Traoré", 
-        location: "Ségou", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        riskLevel: "Modéré",
-        riskClass: "risk-medium",
-        lastActivity: "Il y a 2 jours"
-      },
-      { 
-        name: "Ousmane Konaté", 
-        location: "Tombouctou", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        riskLevel: "Faible",
-        riskClass: "risk-low",
-        lastActivity: "Il y a 4 heures"
-      },
-      { 
-        name: "Aissata Cissé", 
-        location: "Gao", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        riskLevel: "Modéré",
-        riskClass: "risk-medium",
-        lastActivity: "Il y a 6 heures"
-      }
-    ];
+    // Utiliser les clients réels depuis la base de données
+    const realClients = window.SeneBI?.activeClients || [];
+
+    const farmers = realClients.map(client => ({
+      name: client.name,
+      location: client.location,
+      stockStatus: "ok",
+      stockLevel: "Actif",
+      riskLevel: "Faible",
+      riskClass: "risk-low",
+      lastActivity: "Actif"
+    }));
 
     const container = document.getElementById('farmersTableBody');
     if (container) {
-      container.innerHTML = farmers.map(farmer => `
-        <tr>
-          <td>
-            <div class="farmer-name">${farmer.name}</div>
-          </td>
-          <td>
-            <div class="farmer-location">${farmer.location}</div>
-          </td>
-          <td>
-            <span class="stock-badge ${farmer.stockStatus}">${farmer.stockLevel}</span>
-          </td>
-          <td>
-            <span class="risk-badge ${farmer.riskClass}">${farmer.riskLevel}</span>
-          </td>
-          <td>
-            <div class="last-activity">${farmer.lastActivity}</div>
-          </td>
-          <td>
-            <button class="details-btn" onclick="showFarmerDetails('${farmer.name}')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              Détails
-            </button>
-          </td>
-        </tr>
-      `).join('');
+      if (farmers.length === 0) {
+        container.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 48px 24px; color: #6b7280;">
+              <p style="margin: 0; font-size: 15px; font-weight: 500;">Aucun agriculteur actif</p>
+              <p style="margin: 8px 0 0 0; font-size: 13px; color: #9ca3af;">Les agriculteurs approuvés apparaîtront ici</p>
+            </td>
+          </tr>
+        `;
+      } else {
+        container.innerHTML = farmers.map(farmer => `
+          <tr>
+            <td>
+              <div class="farmer-name">${farmer.name}</div>
+            </td>
+            <td>
+              <div class="farmer-location">${farmer.location}</div>
+            </td>
+            <td>
+              <span class="stock-badge ${farmer.stockStatus}">${farmer.stockLevel}</span>
+            </td>
+            <td>
+              <span class="risk-badge ${farmer.riskClass}">${farmer.riskLevel}</span>
+            </td>
+            <td>
+              <div class="last-activity">${farmer.lastActivity}</div>
+            </td>
+            <td>
+              <button class="details-btn" onclick="showFarmerDetails('${farmer.name}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Détails
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
     }
   }
 
@@ -161,170 +110,35 @@
 
   // Function to get farmer data
   function getFarmerData(farmerName) {
-    const farmers = [
-      { 
-        name: "Mamadou Diallo", 
-        location: "Bamako", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        stockPercentage: 25,
-        lastActivity: "Il y a 2 heures",
-        cultures: {
-          riz: { real: 4200, forecast: 4500 },
-          mais: { real: 3800, forecast: 4000 },
-          coton: { real: 2100, forecast: 2300 }
-        },
-        stocks: {
-          uree: 15,
-          npk: 45,
-          semenceRiz: 80,
-          semenceMais: 75,
-          semenceCoton: 85
-        }
-      },
-      { 
-        name: "Aminata Touré", 
-        location: "Sikasso", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        stockPercentage: 78,
-        lastActivity: "Il y a 5 heures",
-        cultures: {
-          riz: { real: 5100, forecast: 5300 },
-          mais: { real: 4600, forecast: 4800 },
-          coton: { real: 2800, forecast: 3000 }
-        },
-        stocks: {
-          uree: 35,
-          npk: 65,
-          semenceRiz: 90,
-          semenceMais: 85,
-          semenceCoton: 95
-        }
-      },
-      { 
-        name: "Bakary Camara", 
-        location: "Kayes", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        stockPercentage: 85,
-        lastActivity: "Il y a 1 jour",
-        cultures: {
-          riz: { real: 4800, forecast: 5000 },
-          mais: { real: 5200, forecast: 5400 },
-          coton: { real: 3200, forecast: 3400 }
-        },
-        stocks: {
-          uree: 55,
-          npk: 75,
-          semenceRiz: 85,
-          semenceMais: 90,
-          semenceCoton: 88
-        }
-      },
-      { 
-        name: "Fatoumata Konaté", 
-        location: "Koulikoro", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        stockPercentage: 22,
-        lastActivity: "Il y a 3 jours",
-        cultures: {
-          riz: { real: 3900, forecast: 4200 },
-          mais: { real: 3500, forecast: 3800 },
-          coton: { real: 1900, forecast: 2100 }
-        },
-        stocks: {
-          uree: 12,
-          npk: 38,
-          semenceRiz: 70,
-          semenceMais: 65,
-          semenceCoton: 72
-        }
-      },
-      { 
-        name: "Ibrahim Bamba", 
-        location: "Mopti", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        stockPercentage: 92,
-        lastActivity: "Il y a 1 semaine",
-        cultures: {
-          riz: { real: 5500, forecast: 5700 },
-          mais: { real: 5800, forecast: 6000 },
-          coton: { real: 3500, forecast: 3700 }
-        },
-        stocks: {
-          uree: 68,
-          npk: 85,
-          semenceRiz: 92,
-          semenceMais: 88,
-          semenceCoton: 91
-        }
-      },
-      { 
-        name: "Mariam Traoré", 
-        location: "Ségou", 
-        stockStatus: "critical", 
-        stockLevel: "Critique",
-        stockPercentage: 18,
-        lastActivity: "Il y a 2 jours",
-        cultures: {
-          riz: { real: 3600, forecast: 3900 },
-          mais: { real: 3200, forecast: 3500 },
-          coton: { real: 1800, forecast: 2000 }
-        },
-        stocks: {
-          uree: 10,
-          npk: 32,
-          semenceRiz: 65,
-          semenceMais: 60,
-          semenceCoton: 68
-        }
-      },
-      { 
-        name: "Ousmane Konaté", 
-        location: "Tombouctou", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        stockPercentage: 88,
-        lastActivity: "Il y a 4 heures",
-        cultures: {
-          riz: { real: 5300, forecast: 5500 },
-          mais: { real: 4900, forecast: 5100 },
-          coton: { real: 3000, forecast: 3200 }
-        },
-        stocks: {
-          uree: 62,
-          npk: 78,
-          semenceRiz: 88,
-          semenceMais: 85,
-          semenceCoton: 90
-        }
-      },
-      { 
-        name: "Aissata Cissé", 
-        location: "Gao", 
-        stockStatus: "ok", 
-        stockLevel: "Ok",
-        stockPercentage: 75,
-        lastActivity: "Il y a 6 heures",
-        cultures: {
-          riz: { real: 4500, forecast: 4700 },
-          mais: { real: 4100, forecast: 4300 },
-          coton: { real: 2500, forecast: 2700 }
-        },
-        stocks: {
-          uree: 48,
-          npk: 72,
-          semenceRiz: 80,
-          semenceMais: 78,
-          semenceCoton: 82
-        }
-      }
-    ];
+    // Utiliser les clients réels depuis la base de données
+    const realClients = window.SeneBI?.activeClients || [];
+    const client = realClients.find(c => c.name === farmerName);
 
-    return farmers.find(f => f.name === farmerName);
+    if (!client) {
+      return null;
+    }
+
+    // Générer des données simulées pour le client réel
+    return {
+      name: client.name,
+      location: client.location,
+      stockStatus: "ok",
+      stockLevel: "Actif",
+      stockPercentage: 75,
+      lastActivity: "Actif",
+      cultures: {
+        riz: { real: 4500, forecast: 4700 },
+        mais: { real: 4100, forecast: 4300 },
+        coton: { real: 2500, forecast: 2700 }
+      },
+      stocks: {
+        uree: 48,
+        npk: 72,
+        semenceRiz: 80,
+        semenceMais: 78,
+        semenceCoton: 82
+      }
+    };
   }
 
   // Function to open farmer modal

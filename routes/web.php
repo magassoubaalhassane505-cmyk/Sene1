@@ -9,13 +9,6 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ClientApiController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes - Projet SeneBI (Version Corrigée)
-|--------------------------------------------------------------------------
-| Structure respectant l'ordre original de l'application
-*/
-
 // --- ACCUEIL & PORTAIL (STRUCTURE ORIGINALE) ---
 Route::get('/', fn () => redirect()->route('login'))->name('welcome');
 Route::get('/index', [DashboardController::class, 'index'])->name('home');
@@ -50,21 +43,27 @@ Route::prefix('manager')->middleware('auth')->group(function () {
     
     // Catalogue des Intrants (catalogue.html)
     Route::get('/catalogue', [ManagementController::class, 'catalogue'])->name('manager.catalogue');
+    Route::post('/catalogue/update', [ManagementController::class, 'updateCatalogue'])->name('manager.catalogue.update');
     
     // Gestion des Stocks (stocks.html)
     Route::get('/stocks', [ManagementController::class, 'stocks'])->name('manager.stocks');
     
     // Contrôle des Visites (visits-control.html)
     Route::get('/visites', [ManagementController::class, 'visites'])->name('manager.visites');
+    Route::post('/visites', [ManagementController::class, 'storeVisite'])->name('manager.visites.store')->middleware('auth');
     
     // Compte Manager (compte.html)
     Route::get('/compte', [ManagementController::class, 'compte'])->name('manager.compte');
+    Route::post('/compte/password', [ManagementController::class, 'updatePassword'])->name('manager.compte.password');
 
     // Approbation des clients inscrits
     Route::post('/clients/approve/{user}', [ManagementController::class, 'approveClient'])->name('manager.clients.approve');
-    
+
     // Rejet des clients inscrits
     Route::post('/clients/reject/{user}', [ManagementController::class, 'rejectClient'])->name('manager.clients.reject');
+
+    // Suppression définitive des utilisateurs
+    Route::delete('/users/{user}', [ManagementController::class, 'destroyUser'])->name('manager.users.destroy')->middleware('auth');
 });
 
 // --- ESPACE CLIENT (AGRICULTEURS - STRUCTURE CLIENT) ---
@@ -84,6 +83,7 @@ Route::prefix('client')->middleware('auth')->group(function () {
     
     // Profil & Compte Client (compte.html)
     Route::get('/mon-compte', [ClientController::class, 'compte'])->name('client.compte');
+    Route::post('/mon-compte/password', [ClientController::class, 'updatePassword'])->name('client.compte.password');
 
     Route::prefix('api')->group(function () {
         Route::get('/parcelles', [ClientApiController::class, 'parcellesIndex']);
@@ -92,7 +92,8 @@ Route::prefix('client')->middleware('auth')->group(function () {
         Route::delete('/parcelles/{parcelle}', [ClientApiController::class, 'parcellesDestroy']);
         Route::get('/stocks', [ClientApiController::class, 'stocksIndex']);
         Route::put('/stocks/{stock}', [ClientApiController::class, 'stocksUpdate']);
-    });
+        Route::post('/consommation', [ClientApiController::class, 'storeConsommation']);
+    })->middleware('auth');
 });
 
 // --- PAGES AUTONOMES (SANS PREFIX) ---

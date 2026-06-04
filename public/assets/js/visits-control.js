@@ -2,6 +2,8 @@
 (function() {
   'use strict';
 
+  console.log('visits-control.js chargé');
+
   // Données de visites pour la page de planning
   const visits = [
     {
@@ -32,47 +34,8 @@
 
   // Charger les visites planifiées
   function loadVisits() {
-    const visitsList = document.getElementById('visitsList');
-    if (!visitsList) return;
-
-    // Trier les visites par date
-    const sortedVisits = [...visits].sort((a, b) => a.date - b.date);
-
-    visitsList.innerHTML = sortedVisits.map(visit => {
-      const date = visit.date;
-      const day = date.getDate();
-      const month = date.toLocaleDateString('fr-FR', { month: 'short' });
-      const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-      return `
-        <div class="visit-item">
-          <div class="visit-date">
-            <div class="day">${day}</div>
-            <div class="month">${month}</div>
-          </div>
-          <div class="visit-details">
-            <div class="visit-farmer">${visit.farmer}</div>
-            <div class="visit-location">${visit.location}</div>
-            <div class="visit-time">${time}</div>
-            <div class="visit-reason">${visit.reason}</div>
-          </div>
-          <div class="visit-status">
-            <span class="status-tag planned">Planifié</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Si aucune visite, afficher l'état vide
-    if (visits.length === 0) {
-      visitsList.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
-          <p>Aucune visite planifiée</p>
-          <p style="font-size: 12px;">Utilisez le formulaire pour planifier votre première visite</p>
-        </div>
-      `;
-    }
+    // Les visites sont maintenant affichées depuis la base de données via Blade
+    // Cette fonction n'est plus nécessaire
   }
 
   // Charger les visites urgentes
@@ -118,11 +81,11 @@
   }
 
   // Planifier une visite urgente
-  function planUrgentVisit(farmerName, location) {
+  function planUrgentVisit(button, farmerName, location, reason) {
     const farmerSelect = document.getElementById('farmerSelect');
     const dateTime = document.getElementById('dateTime');
-    const reason = document.getElementById('reason');
-    
+    const reasonField = document.getElementById('reason');
+
     if (farmerSelect) {
       // Sélectionner l'agriculteur
       const options = farmerSelect.options;
@@ -133,7 +96,12 @@
         }
       }
     }
-    
+
+    if (reasonField) {
+      // Pré-remplir le champ motif avec le texte de l'alerte
+      reasonField.value = reason || `Urgence - Contrôle stock`;
+    }
+
     if (dateTime) {
       // Définir demain à 9h
       const tomorrow = new Date();
@@ -141,7 +109,7 @@
       tomorrow.setHours(9, 0, 0, 0);
       dateTime.value = tomorrow.toISOString().slice(0, 16);
     }
-    
+
     // Scroller vers le formulaire
     const form = document.getElementById('visitForm');
     if (form) {
@@ -149,15 +117,17 @@
     }
   }
 
+  // Attacher la fonction à window pour l'accessibilité globale
+  window.planUrgentVisit = planUrgentVisit;
+
   // Initialiser la page
   function init() {
-    // Charger les données sans vérification d'authentification
-    loadVisits();
-    loadUrgentVisits();
-    
+    // Les visites urgentes sont maintenant générées par Blade depuis le contrôleur
+    // loadUrgentVisits(); // Supprimé - les données viennent de la base de données
+
     // Configurer le formulaire
     setupForm();
-    
+
     // Définir la date/heure par défaut (demain 9h)
     setDefaultDateTime();
   }
@@ -166,40 +136,57 @@
   function setupForm() {
     const form = document.getElementById('visitForm');
     if (!form) return;
-    
-    form.addEventListener('submit', function(e) {
+
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
-      
+
       const farmerSelect = document.getElementById('farmerSelect');
       const dateTime = document.getElementById('dateTime');
       const reason = document.getElementById('reason');
-      
+      const recommandation = document.getElementById('recommandation');
+
       if (!farmerSelect.value || !dateTime.value || !reason.value) {
         alert('Veuillez remplir tous les champs');
         return;
       }
-      
-      // Ajouter la nouvelle visite
-      const newVisit = {
-        id: visits.length + 1,
-        farmer: farmerSelect.options[farmerSelect.selectedIndex].text.split(' (')[0],
-        location: farmerSelect.options[farmerSelect.selectedIndex].text.split(' (')[1].replace(')', ''),
-        date: new Date(dateTime.value),
-        reason: reason.options[reason.selectedIndex].text,
-        status: "planned"
-      };
-      
-      visits.push(newVisit);
-      
-      // Recharger la liste
-      loadVisits();
-      
-      // Réinitialiser le formulaire
-      form.reset();
-      setDefaultDateTime();
-      
-      // Afficher un message de succès
-      alert('Visite planifiée avec succès !');
+
+      try {
+        const csrfToken = document.querySelector('input[name="_token"]')?.value || '';
+
+        const response = await fetch('/manager/visites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+          },
+          body: JSON.stringify({
+            user_id: farmerSelect.value,
+            date_visite: dateTime.value,
+            action_effectuee: reason.value,
+            recommandation: recommandation ? recommandation.value : '',
+            duree: 60
+          })
+        });
+
+        // Vérifier le type de contenu de la réponse
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Erreur serveur: réponse non JSON. Vous êtes peut-être déconnecté.');
+        }
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Erreur lors de la création de la visite');
+        }
+
+        // Recharger la page pour afficher la nouvelle visite
+        console.log('Visite créée avec succès, rechargement de la page...');
+        location.reload();
+
+      } catch (error) {
+        alert('Erreur: ' + (error.message || "Erreur lors de l'enregistrement"));
+      }
     });
   }
   

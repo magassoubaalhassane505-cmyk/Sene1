@@ -46,150 +46,69 @@
           </div>
           
           <div class="card-body">
-            <table class="catalogue-table">
-              <thead>
-                <tr>
-                  <th>Intrant</th>
-                  <th>Unité</th>
-                  <th>Prix Actuel (FCFA)</th>
-                  <th>Dernière mise à jour</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon fertilizer"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-fertilizer"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">Urée</div>
-                        <div class="product-description">Engrais azoté 46%</div>
+            <form action="{{ route('manager.catalogue.update') }}" method="POST">
+              @csrf
+              <table class="catalogue-table">
+                <thead>
+                  <tr>
+                    <th>Intrant</th>
+                    <th>Unité</th>
+                    <th>Prix Actuel (FCFA)</th>
+                    <th>Dernière mise à jour</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($intrants as $intrant)
+                  <tr>
+                    <td>
+                      <div class="product-info">
+                        <div class="product-icon {{ $intrant->type }}">
+                          @if($intrant->type === 'fertilizer')
+                            <svg class="icon" aria-hidden="true"><use xlink:href="#icon-fertilizer"></use></svg>
+                          @elseif($intrant->type === 'seed')
+                            <svg class="icon" aria-hidden="true"><use xlink:href="#icon-seed"></use></svg>
+                          @else
+                            <svg class="icon" aria-hidden="true"><use xlink:href="#icon-chemical"></use></svg>
+                          @endif
+                        </div>
+                        <div class="product-details">
+                          <div class="product-name">{{ $intrant->nom }}</div>
+                          <div class="product-description">{{ $intrant->description }}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>Sac de 50kg</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-uree" class="price-input" value="25000" min="0" step="1000">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>01/05/2026</td>
-                  <td><span class="status-badge available">Disponible</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon fertilizer"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-fertilizer"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">NPK 15-15-15</div>
-                        <div class="product-description">Engrais complet</div>
+                    </td>
+                    <td>{{ $intrant->unite }}</td>
+                    <td>
+                      <div class="price-wrapper">
+                        <input type="number" name="prix[{{ $intrant->id }}]" class="price-input" value="{{ $intrant->prix }}" min="0" step="100">
+                        <span class="price-unit">FCFA</span>
                       </div>
-                    </div>
-                  </td>
-                  <td>Sac de 50kg</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-npk" class="price-input" value="35000" min="0" step="1000">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>28/04/2026</td>
-                  <td><span class="status-badge available">Disponible</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon seed"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-seed"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">Semences Maïs</div>
-                        <div class="product-description">Variété améliorée</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>kg</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-mais" class="price-input" value="1200" min="0" step="100">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>15/04/2026</td>
-                  <td><span class="status-badge limited">Stock limité</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon seed"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-seed"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">Semences Riz</div>
-                        <div class="product-description">Variété IR841</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>kg</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-riz" class="price-input" value="1500" min="0" step="100">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>20/04/2026</td>
-                  <td><span class="status-badge available">Disponible</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon chemical"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-chemical"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">Herbicide</div>
-                        <div class="product-description">Désherbage sélectif</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Litre</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-herbicide" class="price-input" value="8500" min="0" step="500">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>10/04/2026</td>
-                  <td><span class="status-badge out-of-stock">Rupture</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="product-info">
-                      <div class="product-icon chemical"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-chemical"></use></svg></div>
-                      <div class="product-details">
-                        <div class="product-name">Insecticide</div>
-                        <div class="product-description">Traitement anti-insectes</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Litre</td>
-                  <td>
-                    <div class="price-wrapper">
-                      <input type="number" id="prix-insecticide" class="price-input" value="12000" min="0" step="500">
-                      <span class="price-unit">FCFA</span>
-                    </div>
-                  </td>
-                  <td>05/05/2026</td>
-                  <td><span class="status-badge available">Disponible</span></td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <div style="text-align: center; margin-top: 32px;">
-              <button class="save-btn" onclick="savePrices()">
-                <svg class="save-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
-                Enregistrer les nouveaux tarifs
-              </button>
-            </div>
+                    </td>
+                    <td>{{ $intrant->derniere_maj ? \Carbon\Carbon::parse($intrant->derniere_maj)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                      <select name="statut[{{ $intrant->id }}]" class="status-badge {{ $intrant->statut === 'Disponible' ? 'available' : ($intrant->statut === 'Stock limité' ? 'limited' : 'out-of-stock') }}" style="border: none; background: transparent; cursor: pointer;">
+                        <option value="Disponible" {{ $intrant->statut === 'Disponible' ? 'selected' : '' }}>Disponible</option>
+                        <option value="Stock limité" {{ $intrant->statut === 'Stock limité' ? 'selected' : '' }}>Stock limité</option>
+                        <option value="Rupture" {{ $intrant->statut === 'Rupture' ? 'selected' : '' }}>Rupture</option>
+                      </select>
+                    </td>
+                  </tr>
+                  @endforeach
+                </tbody>
+              </table>
+              
+              <div style="text-align: center; margin-top: 32px;">
+                <button type="submit" class="save-btn">
+                  <svg class="save-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  Enregistrer les nouveaux tarifs
+                </button>
+              </div>
+            </form>
           </div>
         </section>
       </main>

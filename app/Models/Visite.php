@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
-#[Fillable(['user_id', 'date_visite', 'parcelle_id', 'action_effectuee', 'duree'])]
+#[Fillable(['user_id', 'date_visite', 'parcelle_id', 'action_effectuee', 'duree', 'recommandation'])]
 class Visite extends Model
 {
     use HasFactory;

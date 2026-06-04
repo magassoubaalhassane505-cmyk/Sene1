@@ -159,7 +159,7 @@
     const pwdForm = SeneBI.qs("#passwordForm");
     if (pwdForm && !pwdForm.dataset.bound) {
       pwdForm.dataset.bound = "1";
-      pwdForm.addEventListener("submit", (e) => {
+      pwdForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const cur = SeneBI.qs("#currentPassword")?.value || "";
         const neu = SeneBI.qs("#newPassword")?.value || "";
@@ -175,26 +175,62 @@
           return;
         }
 
-        const users = loadUsers();
-        const emailKey = normalizeEmail(auth.email);
-        const idx = users.findIndex((u) => normalizeEmail(u.email) === emailKey);
-        if (idx < 0) {
-          setFeedback(
-            fb,
-            "Compte introuvable dans la liste locale. Utilisez un compte cree depuis le portail manager.",
-            "err"
-          );
-          return;
-        }
-        if (users[idx].password !== cur) {
-          setFeedback(fb, "Mot de passe actuel incorrect.", "err");
-          return;
-        }
+        // Vérifier si on est en mode serveur
+        if (document.body.dataset.serverSide === '1') {
+          try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
+            // Déterminer la route selon la page (manager ou client)
+            const isClientPage = document.body.dataset.page === 'compte-client';
+            const apiUrl = isClientPage ? '/client/mon-compte/password' : '/manager/compte/password';
+            
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+              },
+              body: JSON.stringify({
+                current_password: cur,
+                new_password: neu,
+                confirm_password: conf
+              })
+            });
 
-        users[idx].password = neu;
-        saveUsers(users);
-        pwdForm.reset();
-        setFeedback(fb, "Mot de passe mis à jour avec succès.", "ok");
+            const result = await response.json();
+
+            if (result.success) {
+              setFeedback(fb, result.message, "ok");
+              pwdForm.reset();
+            } else {
+              setFeedback(fb, result.error || "Erreur lors de la mise à jour du mot de passe", "err");
+            }
+          } catch (error) {
+            setFeedback(fb, "Erreur: " + error.message, "err");
+          }
+        } else {
+          // Mode local (localStorage)
+          const users = loadUsers();
+          const emailKey = normalizeEmail(auth.email);
+          const idx = users.findIndex((u) => normalizeEmail(u.email) === emailKey);
+          if (idx < 0) {
+            setFeedback(
+              fb,
+              "Compte introuvable dans la liste locale. Utilisez un compte cree depuis le portail manager.",
+              "err"
+            );
+            return;
+          }
+          if (users[idx].password !== cur) {
+            setFeedback(fb, "Mot de passe actuel incorrect.", "err");
+            return;
+          }
+
+          users[idx].password = neu;
+          saveUsers(users);
+          pwdForm.reset();
+          setFeedback(fb, "Mot de passe mis à jour avec succès.", "ok");
+        }
       });
     }
 

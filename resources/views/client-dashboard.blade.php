@@ -146,8 +146,8 @@
                     <div class="weather-temp">32°C</div>
                     <div class="weather-condition">Temps sec</div>
                     <div style="font-weight: 600; margin-top: 4px; color: #10b981;">
-                        @if($derniereVisite)
-                            {{ $derniereVisite->action_effectuee }} - Visite du {{ $derniereVisite->date_visite->format('d/m/Y') }}
+                        @if($derniereVisite && $derniereVisite->recommandation)
+                            {{ $derniereVisite->recommandation }}
                         @else
                             Conditions optimales observées sur vos parcelles. Suivez les indicateurs ci-dessous.
                         @endif

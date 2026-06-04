@@ -533,6 +533,12 @@
     <script src="{{ asset('assets/js/dashboard-global.js') }}"></script>
     <script src="{{ asset('assets/js/region-filter.js') }}"></script>
     <script src="{{ asset('assets/js/notifications-simple.js') }}"></script>
+
+    <script>
+      // Passer les top clients au JavaScript
+      window.SeneBI = window.SeneBI || {};
+      window.SeneBI.topClients = {{ \Illuminate\Support\Js::from($topClients) }};
+    </script>
     
     <!-- Script d'automatisation du Dashboard Manager -->
     <script>
@@ -694,33 +700,29 @@
       window.addEventListener('load', function() {
         console.log("🚀 Initialisation du dashboard manager avec données complètes");
         
-        // Remplir le tableau Top Performance
+        // Remplir le tableau Top Performance avec les clients réels
         const topFarmersBody = document.getElementById('topFarmersBody');
-        if (topFarmersBody && !topFarmersBody.innerHTML.trim()) {
-          topFarmersBody.innerHTML = `
-            <div class="table-row">
-              <div class="table-rank">🥇</div>
-              <div class="table-name">Mamadou Konaté</div>
-              <div class="table-location">Sikasso</div>
-              <div class="table-performance">4.2 t/ha</div>
-              <div class="table-culture">Maïs</div>
-            </div>
-            <div class="table-row">
-              <div class="table-rank">🥈</div>
-              <div class="table-name">Aminata Touré</div>
-              <div class="table-location">Bamako</div>
-              <div class="table-performance">3.8 t/ha</div>
-              <div class="table-culture">Riz</div>
-            </div>
-            <div class="table-row">
-              <div class="table-rank">🥉</div>
-              <div class="table-name">Ibrahim Cissé</div>
-              <div class="table-location">Koulikoro</div>
-              <div class="table-performance">3.5 t/ha</div>
-              <div class="table-culture">Coton</div>
-            </div>
-          `;
-          console.log("✅ Top Performance rempli");
+        if (topFarmersBody) {
+          const topClients = window.SeneBI?.topClients || [];
+
+          if (topClients.length === 0) {
+            topFarmersBody.innerHTML = `
+              <div class="table-row" style="text-align: center; padding: 24px; color: #6b7280;">
+                Aucun agriculteur avec des données de performance
+              </div>
+            `;
+          } else {
+            topFarmersBody.innerHTML = topClients.map((client, index) => `
+              <div class="table-row">
+                <div class="table-rank">${index + 1}</div>
+                <div class="table-name">${client.name}</div>
+                <div class="table-location">${client.location}</div>
+                <div class="table-performance">${client.rendement.toFixed(1)} t/ha</div>
+                <div class="table-culture">${client.culture}</div>
+              </div>
+            `).join('');
+          }
+          console.log("✅ Top Performance rempli avec les clients réels");
         }
         
         // Animation des barres de tendances

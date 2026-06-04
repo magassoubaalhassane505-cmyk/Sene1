@@ -6,8 +6,7 @@
     <title>Planning des Visites - SeneBI</title>
     <link rel="stylesheet" href="{{ asset('assets/css/base.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/dashboard.css') }}" />
-    <script src="{{ asset('assets/js/visits-control.js') }}"></script>
-    
+
     <!-- Styles pour la navigation active -->
     <style>
       .manager-nav a.active {
@@ -17,6 +16,33 @@
         border-left: 3px solid #10b981;
         border-radius: 0 8px 8px 0;
         transition: all 0.2s ease;
+      }
+
+      .visits-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+
+      .visits-list::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      .visits-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 6px;
+      }
+
+      .visits-list::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 6px;
+        border: 2px solid #f1f1f1;
+      }
+
+      .visits-list::-webkit-scrollbar-thumb:hover {
+        background: #059669;
       }
       
       .manager-nav a.active:hover {
@@ -149,54 +175,31 @@
               </div>
               
               <div class="visits-list" id="visitsList">
-                <!-- Données initiales des visites prévues -->
-                <div class="visit-item">
-                  <div class="visit-date">
-                    <span class="visit-day">2</span>
-                    <span class="visit-month">Juin</span>
-                    <span class="visit-time">17:01</span>
+                @foreach($visites as $visite)
+                  <div class="visit-item">
+                    <div class="visit-date">
+                      <span class="visit-day">{{ $visite->date_visite->format('d') }}</span>
+                      <span class="visit-month">{{ $visite->date_visite->format('M') }}</span>
+                      <span class="visit-time">{{ $visite->date_visite->format('H:i') }}</span>
+                    </div>
+                    <div class="visit-details">
+                      <div class="visit-person">{{ $visite->user->name ?? 'N/A' }}</div>
+                      <div class="visit-location">{{ $visite->user->location ?? 'Non spécifié' }}</div>
+                      <div class="visit-purpose">{{ $visite->action_effectuee }}</div>
+                    </div>
+                    <div class="visit-status">
+                      <span class="status-badge planifie">Planifié</span>
+                    </div>
                   </div>
-                  <div class="visit-details">
-                    <div class="visit-person">Mamadou Diallo</div>
-                    <div class="visit-location">Bamako</div>
-                    <div class="visit-purpose">Contrôle stock Urée</div>
+                @endforeach
+
+                @if($visites->isEmpty())
+                  <div style="text-align: center; padding: 40px; color: var(--muted);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+                    <p>Aucune visite planifiée</p>
+                    <p style="font-size: 12px;">Utilisez le formulaire pour planifier votre première visite</p>
                   </div>
-                  <div class="visit-status">
-                    <span class="status-badge planifie">Planifié</span>
-                  </div>
-                </div>
-                
-                <div class="visit-item">
-                  <div class="visit-date">
-                    <span class="visit-day">4</span>
-                    <span class="visit-month">Juin</span>
-                    <span class="visit-time">17:01</span>
-                  </div>
-                  <div class="visit-details">
-                    <div class="visit-person">Aminata Touré</div>
-                    <div class="visit-location">Sikasso</div>
-                    <div class="visit-purpose">Alerte rendement Riz</div>
-                  </div>
-                  <div class="visit-status">
-                    <span class="status-badge planifie">Planifié</span>
-                  </div>
-                </div>
-                
-                <div class="visit-item">
-                  <div class="visit-date">
-                    <span class="visit-day">6</span>
-                    <span class="visit-month">Juin</span>
-                    <span class="visit-time">17:01</span>
-                  </div>
-                  <div class="visit-details">
-                    <div class="visit-person">Bakary Camara</div>
-                    <div class="visit-location">Kayes</div>
-                    <div class="visit-purpose">Conseil semis Coton</div>
-                  </div>
-                  <div class="visit-status">
-                    <span class="status-badge planifie">Planifié</span>
-                  </div>
-                </div>
+                @endif
               </div>
             </article>
           </section>
@@ -216,49 +219,33 @@
               </div>
               
               <div class="urgent-list" id="urgentList">
-                <!-- Données initiales des visites urgentes -->
-                <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
-                  <div style="width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-right: 12px;"></div>
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; margin-bottom: 2px;">Mamadou Diallo</div>
-                    <div style="font-size: 14px; color: var(--muted); margin-bottom: 2px;">Bamako</div>
-                    <div style="font-size: 13px; color: var(--danger);">Stock Urée critique (15%)</div>
+                @if ($urgentClients->count() > 0)
+                  @foreach ($urgentClients as $urgentClient)
+                    <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
+                      <div style="width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-right: 12px;"></div>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 2px;">{{ $urgentClient['name'] }}</div>
+                        <div style="font-size: 14px; color: var(--muted); margin-bottom: 2px;">{{ $urgentClient['location'] }}</div>
+                        <div style="font-size: 13px; color: var(--danger);">Stock {{ $urgentClient['intrant'] }} ({{ $urgentClient['percentage'] }}%)</div>
+                      </div>
+                      <button class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;" onclick="planUrgentVisit(this, '{{ $urgentClient['name'] }}', '{{ $urgentClient['location'] }}', 'Contrôle stock {{ $urgentClient['intrant'] }}')">
+                        Planifier visite
+                      </button>
+                    </div>
+                  @endforeach
+                @else
+                  <div style="text-align: center; padding: 24px; color: var(--muted);">
+                    <p style="margin: 0; font-size: 14px;">Aucun stock enregistré</p>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--muted);">Les stocks des clients apparaîtront ici</p>
                   </div>
-                  <button class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;" onclick="planUrgentVisit(this, 'Mamadou Diallo', 'Bamako', 'Contrôle stock Urée')">
-                    Planifier visite
-                  </button>
-                </div>
-                
-                <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
-                  <div style="width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-right: 12px;"></div>
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; margin-bottom: 2px;">Fatoumata Konaté</div>
-                    <div style="font-size: 14px; color: var(--muted); margin-bottom: 2px;">Koulikoro</div>
-                    <div style="font-size: 13px; color: var(--danger);">Stock Urée critique (12%)</div>
-                  </div>
-                  <button class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;" onclick="planUrgentVisit(this, 'Fatoumata Konaté', 'Sikasso', 'Alerte rendement Riz')">
-                    Planifier visite
-                  </button>
-                </div>
-                
-                <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
-                  <div style="width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-right: 12px;"></div>
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; margin-bottom: 2px;">Mariam Traoré</div>
-                    <div style="font-size: 14px; color: var(--muted); margin-bottom: 2px;">Ségou</div>
-                    <div style="font-size: 13px; color: var(--danger);">Stock Urée critique (10%)</div>
-                  </div>
-                  <button class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;" onclick="planUrgentVisit(this, 'Mariam Traoré', 'Kayes', 'Conseil semis Coton')">
-                    Planifier visite
-                  </button>
-                </div>
+                @endif
               </div>
 
               <!-- Widget de Statut -->
               <div class="status-widget">
                 <div class="status-summary">
                   <div class="status-number">
-                    <span class="status-count" id="urgentCount">3</span>
+                    <span class="status-count" id="urgentCount">{{ $urgentClients->count() }}</span>
                     <span class="status-label">Total Urgences</span>
                   </div>
                   <div class="status-tip">
@@ -281,19 +268,15 @@
             </div>
             
             <form class="visit-form visit-form-horizontal" id="visitForm">
+              @csrf
               <div class="form-row">
                 <div class="form-group">
                   <label for="farmerSelect">Agriculteur</label>
-                  <select id="farmerSelect" class="form-control" required>
+                  <select id="farmerSelect" name="user_id" class="form-control" required>
                     <option value="">Sélectionner un agriculteur</option>
-                    <option value="mamadou-diallo">Mamadou Diallo (Bamako)</option>
-                    <option value="aminata-toure">Aminata Touré (Sikasso)</option>
-                    <option value="bakary-camara">Bakary Camara (Kayes)</option>
-                    <option value="fatoumata-konate">Fatoumata Konaté (Koulikoro)</option>
-                    <option value="ibrahim-bamba">Ibrahim Bamba (Mopti)</option>
-                    <option value="mariam-traore">Mariam Traoré (Ségou)</option>
-                    <option value="ousmane-konate">Ousmane Konaté (Tombouctou)</option>
-                    <option value="aissata-cisse">Aissata Cissé (Gao)</option>
+                    @foreach($clients as $client)
+                      <option value="{{ $client->id }}">{{ $client->name }} ({{ $client->location ?? 'Non spécifié' }})</option>
+                    @endforeach
                   </select>
                 </div>
 
@@ -315,6 +298,11 @@
                     <option value="conseil-technique">Conseil technique</option>
                     <option value="livraison-urgente">Livraison Urgente (Urée/NPK)</option>
                   </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="recommandation">Recommandation</label>
+                  <textarea id="recommandation" name="recommandation" class="form-control" rows="3" placeholder="Conseils et recommandations pour l'agriculteur..."></textarea>
                 </div>
 
                 <div class="form-group form-button-group">
