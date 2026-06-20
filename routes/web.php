@@ -8,10 +8,22 @@ use App\Http\Controllers\ManagementController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ClientApiController;
+use App\Http\Controllers\PublicController;
+
+// --- PARTIE PUBLIQUE (Accessible sans connexion) ---
+Route::get('/', [PublicController::class, 'index'])->name('home');
+Route::get('/solutions', [PublicController::class, 'solutions'])->name('public.solutions');
+Route::redirect('/fonctionnalites', '/solutions', 301);
+Route::redirect('/services', '/solutions', 301);
+Route::redirect('/business-intelligence', '/solutions', 301);
+Route::get('/a-propos', [PublicController::class, 'about'])->name('public.about');
+Route::get('/contact', [PublicController::class, 'contact'])->name('public.contact');
+Route::get('/faq', [PublicController::class, 'faq'])->name('public.faq');
+Route::get('/connexion', [PublicController::class, 'login'])->name('public.login');
+Route::get('/inscription', [PublicController::class, 'register'])->name('public.register');
 
 // --- ACCUEIL & PORTAIL (STRUCTURE ORIGINALE) ---
-Route::get('/', fn () => redirect()->route('login'))->name('welcome');
-Route::get('/index', [DashboardController::class, 'index'])->name('home');
+Route::get('/index', [DashboardController::class, 'index'])->name('home.old');
 Route::get('/secure-portal', [AuthController::class, 'portal'])->middleware('public.portal')->name('secure.portal');
 
 // --- AUTHENTIFICATION (connexion unique) ---
@@ -91,8 +103,10 @@ Route::prefix('client')->middleware('auth')->group(function () {
         Route::put('/parcelles/{parcelle}', [ClientApiController::class, 'parcellesUpdate']);
         Route::delete('/parcelles/{parcelle}', [ClientApiController::class, 'parcellesDestroy']);
         Route::get('/stocks', [ClientApiController::class, 'stocksIndex']);
+        Route::get('/stocks/mouvements', [ClientApiController::class, 'stocksMouvementsIndex']);
         Route::put('/stocks/{stock}', [ClientApiController::class, 'stocksUpdate']);
         Route::post('/consommation', [ClientApiController::class, 'storeConsommation']);
+        Route::post('/stocks/entree', [ClientApiController::class, 'addStockEntree']);
     })->middleware('auth');
 });
 

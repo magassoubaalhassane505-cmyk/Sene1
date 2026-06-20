@@ -12,9 +12,10 @@
   --accent: #059669;
   --accent-soft: #d1fae5;
   --accent-muted: rgba(5, 150, 105, 0.12);
-  --good: #16a34a;
-  --warn: #f59e0b;
-  --danger: #ef4444;
+--good: #16a34a;
+   --warn: #f59e0b;
+   --warn-soft: #fef3c7;
+   --danger: #ef4444;
   --fs-title: 26px;
   --fs-subtitle: 14px;
   --fs-section: 16px;

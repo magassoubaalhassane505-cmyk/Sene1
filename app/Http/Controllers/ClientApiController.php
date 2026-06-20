@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Parcelle;
 use App\Models\Stock;
+use App\Models\StockMouvement;
 use App\Models\IntrantConsomme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ClientApiController extends Controller
 {
@@ -71,6 +73,18 @@ class ClientApiController extends Controller
         return response()->json(['data' => $stocks]);
     }
 
+    public function stocksMouvementsIndex()
+    {
+        $user = Auth::user();
+        $mouvements = StockMouvement::where('user_id', $user->id)
+            ->with('stock')
+            ->orderBy('date_mouvement', 'desc')
+            ->limit(100)
+            ->get();
+
+        return response()->json(['data' => $mouvements]);
+    }
+
     public function stocksUpdate(Request $request, Stock $stock)
     {
         $this->authorizeStock($stock);
@@ -81,7 +95,20 @@ class ClientApiController extends Controller
             'cout_unitaire' => 'nullable|numeric|min:0',
         ]);
 
+        $quantiteAvant = $stock->quantite_actuelle;
         $stock->update($data);
+
+        // Enregistrer l'ajustement
+        StockMouvement::create([
+            'user_id' => Auth::id(),
+            'stock_id' => $stock->id,
+            'type' => 'ajustement',
+            'description' => 'Ajustement manuel du stock',
+            'quantite' => abs($data['quantite_actuelle'] - $quantiteAvant),
+            'quantite_avant' => $quantiteAvant,
+            'quantite_apres' => $stock->quantite_actuelle,
+            'date_mouvement' => now(),
+        ]);
 
         return response()->json(['data' => $stock->fresh()]);
     }
@@ -119,7 +146,7 @@ class ClientApiController extends Controller
 
     public function storeConsommation(Request $request)
     {
-        try {
+        return DB::transaction(function () use ($request) {
             $data = $request->validate([
                 'region' => 'required|string',
                 'parcelle' => 'required|string',
@@ -169,9 +196,23 @@ class ClientApiController extends Controller
                 return response()->json(['error' => 'Quantité insuffisante en stock'], 400);
             }
 
+            $quantiteAvant = $stock->quantite_actuelle;
+
             // Déduire la quantité du stock
             $stock->quantite_actuelle -= $data['quantite'];
             $stock->save();
+
+            // Enregistrer le mouvement de stock
+            StockMouvement::create([
+                'user_id' => Auth::id(),
+                'stock_id' => $stock->id,
+                'type' => 'utilisation',
+                'description' => "Utilisation pour parcelle {$data['parcelle']} ({$data['region']})",
+                'quantite' => $data['quantite'],
+                'quantite_avant' => $quantiteAvant,
+                'quantite_apres' => $stock->quantite_actuelle,
+                'date_mouvement' => $data['date'],
+            ]);
 
             // Vérifier si le stock est critique
             $estCritique = $stock->quantite_actuelle <= $stock->seuil_critique;
@@ -187,9 +228,43 @@ class ClientApiController extends Controller
                     'est_critique' => $estCritique,
                 ],
             ]);
+        });
+    }
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Erreur: ' . $e->getMessage()], 500);
-        }
+    public function addStockEntree(Request $request)
+    {
+        return DB::transaction(function () use ($request) {
+            $data = $request->validate([
+                'stock_id' => 'required|exists:stocks,id',
+                'quantite' => 'required|numeric|min:0.01',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+            ]);
+
+            $stock = Stock::findOrFail($data['stock_id']);
+            $this->authorizeStock($stock);
+
+            $quantiteAvant = $stock->quantite_actuelle;
+            $stock->quantite_actuelle += $data['quantite'];
+            $stock->save();
+
+            // Enregistrer le mouvement d'entrée
+            StockMouvement::create([
+                'user_id' => Auth::id(),
+                'stock_id' => $stock->id,
+                'type' => 'entree',
+                'description' => $data['description'] ?? 'Entrée de stock',
+                'quantite' => $data['quantite'],
+                'quantite_avant' => $quantiteAvant,
+                'quantite_apres' => $stock->quantite_actuelle,
+                'date_mouvement' => $data['date'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Entrée de stock enregistrée',
+                'stock' => $stock->fresh(),
+            ]);
+        });
     }
 }
