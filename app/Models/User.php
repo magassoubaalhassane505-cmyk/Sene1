@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(Recolte::class);
     }
 
+    public function intrantsConsommes(): HasMany
+    {
+        return $this->hasMany(IntrantConsomme::class);
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

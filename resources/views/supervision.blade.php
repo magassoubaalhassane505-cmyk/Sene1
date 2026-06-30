@@ -320,11 +320,17 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
               <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 4px;"></i>Niveaux de stocks</div>
-              <div style="height: 160px;"><canvas id="stockMiniChart"></canvas></div>
+              <div style="height: 160px; position: relative;">
+                <canvas id="stockMiniChart"></canvas>
+                <div id="stockMiniChartEmpty" style="display: none; position: absolute; inset: 0; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px; font-weight: 500;">Aucune donnée disponible pour cet agriculteur.</div>
+              </div>
             </div>
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
               <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;"><i class="fas fa-chart-pie" style="margin-right: 4px;"></i>Répartition cultures</div>
-              <div style="height: 160px;"><canvas id="cultureMiniChart"></canvas></div>
+              <div style="height: 160px; position: relative;">
+                <canvas id="cultureMiniChart"></canvas>
+                <div id="cultureMiniChartEmpty" style="display: none; position: absolute; inset: 0; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px; font-weight: 500;">Aucune donnée disponible pour cet agriculteur.</div>
+              </div>
             </div>
           </div>
 
@@ -399,7 +405,7 @@
         ])->values()
       ) }};
     </script>
-    <script src="{{ asset('assets/js/supervision.js') }}"></script>
+    <script src="{{ asset('assets/js/supervision.js') }}?v={{ time() }}"></script>
 
     <!-- Modal de rejet de demande d'inscription -->
     <div id="rejectModal" class="modal-overlay" hidden style="display: none;">

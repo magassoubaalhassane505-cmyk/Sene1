@@ -75,13 +75,26 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return deepClone(DefaultState);
-      const parsed = JSON.parse(raw);
-      return {
+      const parsed = raw ? JSON.parse(raw) : {};
+      const state = {
         ...deepClone(DefaultState),
         ...parsed,
         bySeason: { ...deepClone(DefaultState.bySeason), ...(parsed.bySeason || {}) },
       };
+
+      // Fusionner les donnees reelles du serveur pour la page Rentabilite
+      if (window.SeneBI_RENTABILITE && typeof window.SeneBI_RENTABILITE.business === 'object') {
+        const season = state.season || Object.keys(state.bySeason || DefaultState.bySeason)[0] || '2025';
+        if (!state.bySeason[season]) {
+          state.bySeason[season] = deepClone(DefaultState.bySeason[season] || {});
+        }
+        state.bySeason[season].business = {
+          ...(state.bySeason[season].business || {}),
+          ...window.SeneBI_RENTABILITE.business,
+        };
+      }
+
+      return state;
     } catch {
       return deepClone(DefaultState);
     }

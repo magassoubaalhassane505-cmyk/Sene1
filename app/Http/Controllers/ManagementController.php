@@ -607,22 +607,42 @@ class ManagementController extends Controller
             abort(404);
         }
 
-        $user->load(['parcelles', 'stocks', 'recoltes', 'visites', 'intrantConsommes']);
+        $user->load(['parcelles', 'stocks', 'recoltes', 'visites', 'intrantsConsommes']);
 
         $surfaceTotal = $user->parcelles->sum('surface');
         $totalRecolte = $user->recoltes->sum('quantite');
         $rendementMoyen = $surfaceTotal > 0 ? ($totalRecolte / $surfaceTotal) : 0;
         $totalCA = $user->recoltes->sum('revenu_total');
-        $totalCouts = $user->intrantConsommes->sum(fn($ic) => $ic->quantite_consommee * ($ic->stock->cout_unitaire ?? 0));
+        $totalCouts = $user->intrantsConsommes->sum(fn($ic) => $ic->quantite_consommee * ($ic->stock->cout_unitaire ?? 0));
         $beneficeNet = $totalCA - $totalCouts;
         $rentabiliteMoyenne = $user->recoltes->avg('benefice_net') ?? 0;
 
-        $stocksData = $user->stocks->map(fn($s) => [
-            'nom' => $s->nom,
-            'quantite' => $s->quantite_actuelle,
-            'seuil' => $s->seuil_critique,
-            'est_critique' => $s->quantite_actuelle <= $s->seuil_critique,
-        ]);
+        $stocksData = $user->stocks->map(function ($s) {
+            $quantite = (float) $s->quantite_actuelle;
+            $seuil = (float) $s->seuil_critique;
+            $rawMinimum = (float) $s->stock_minimum;
+            $minimum = $rawMinimum > 0 ? $rawMinimum : max($seuil * 1.5, 1);
+
+            $pourcentage = $minimum > 0 ? min(100, round(($quantite / $minimum) * 100)) : 0;
+
+            if ($quantite <= $seuil) {
+                $statut = 'Critique';
+            } elseif ($quantite <= $minimum) {
+                $statut = 'Faible';
+            } else {
+                $statut = 'OK';
+            }
+
+            return [
+                'nom' => $s->nom,
+                'quantite' => $quantite,
+                'seuil' => $seuil,
+                'minimum' => $minimum,
+                'est_critique' => $quantite <= $seuil,
+                'statut' => $statut,
+                'pourcentage' => $pourcentage,
+            ];
+        });
 
         $visitesData = $user->visites->sortByDesc('date_visite')->take(10)->map(fn($v) => [
             'date' => $v->date_visite->format('d/m/Y H:i'),
@@ -631,10 +651,15 @@ class ManagementController extends Controller
             'statut' => $v->date_visite->lt(now()) ? 'Effectuée' : 'Planifiée',
         ]);
 
-        $culturesData = $user->recoltes->groupBy('culture')->map(fn($group) => [
+        $parcellesAvecCulture = $user->parcelles()
+            ->whereNotNull('culture')
+            ->where('culture', '!=', '')
+            ->get();
+
+        $culturesData = $parcellesAvecCulture->groupBy('culture')->map(fn($group) => [
             'culture' => $group->first()->culture,
-            'quantite' => $group->sum('quantite'),
-            'surface' => $group->sum(fn($r) => $r->parcelle->surface ?? 0),
+            'surface' => $group->sum('surface'),
+            'parcelles_count' => $group->count(),
         ])->values();
 
         $alertes = [];

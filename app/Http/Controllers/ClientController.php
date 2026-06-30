@@ -273,16 +273,22 @@ class ClientController extends Controller
         
         // Récupérer les parcelles pour le sélecteur
         $parcelles = $user->parcelles()->orderBy('nom')->get();
-        
+        $parcellesData = $parcelles->map(fn($p) => [
+            'id' => $p->id,
+            'nom' => $p->nom,
+            'surface' => (float) $p->surface,
+            'culture' => $p->culture,
+        ])->values();
+
         $rentabiliteHarvests = $recoltes->map(fn($r) => [
-          'date' => $r->date_recolte->format('d/m/Y'),
-          'parcel' => $r->parcelle->nom ?? 'N/A',
-          'qtyKg' => $r->quantite,
-          'unitPrice' => $r->prix_unitaire,
-          'costs' => $r->couts_totaux,
-          'revenue' => $r->revenu_total,
-          'profit' => $r->benefice_net,
-          'culture' => $r->culture,
+            'date' => $r->date_recolte->format('d/m/Y'),
+            'parcel' => $r->parcelle->nom ?? 'N/A',
+            'qtyKg' => $r->quantite,
+            'unitPrice' => $r->prix_unitaire,
+            'costs' => $r->couts_totaux,
+            'revenue' => $r->revenu_total,
+            'profit' => $r->benefice_net,
+            'culture' => $r->culture,
         ]);
         
         // ===================== NOUVELLES DONNÉES FINANCIÈRES =====================
@@ -376,6 +382,27 @@ class ClientController extends Controller
             ->orderByDesc('benefice_total')
             ->limit(3)
             ->get();
+
+        // Calcul des rendements par culture a partir des donnees reelles
+        $cultureYields = [];
+        $parcellesParCulture = $user->parcelles()->get()->groupBy('culture');
+        $recoltesParCulture = $user->recoltes()->get()->groupBy('culture');
+        $toutesCultures = $parcellesParCulture->keys()->merge($recoltesParCulture->keys())->unique();
+
+        foreach ($toutesCultures as $culture) {
+            $surface = $parcellesParCulture->get($culture, collect())->sum('surface');
+            $quantite = $recoltesParCulture->get($culture, collect())->sum('quantite');
+            $rendement = $surface > 0 ? round($quantite / $surface, 2) : 0;
+            $cultureYields[] = [
+                'culture' => $culture,
+                'surface' => $surface,
+                'quantite' => $quantite,
+                'rendement' => $rendement,
+            ];
+        }
+
+        // Trier par rendement decroissant
+        usort($cultureYields, fn($a, $b) => $b['rendement'] <=> $a['rendement']);
         
         // Badge de performance automatique
         $badgePerformance = $this->calculatePerformanceBadge($totalCA, $totalBenefice, $margeMoyenne);
@@ -398,6 +425,7 @@ class ClientController extends Controller
             'totalBenefice',
             'margeMoyenne',
             'parcelles',
+            'parcellesData',
             'rentabiliteHarvests',
             'moyenneMensuelleCA',
             'moyenneMensuelleBenefice',
@@ -416,6 +444,7 @@ class ClientController extends Controller
             'coutsTransport',
             'coutsAutres',
             'topCultures',
+            'cultureYields',
             'badgePerformance',
             'pdfHistory'
         ));

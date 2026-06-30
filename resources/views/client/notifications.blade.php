@@ -340,25 +340,125 @@
     <script src="{{ asset('assets/js/layout.js') }}"></script>
     <script src="{{ asset('assets/js/core.js') }}"></script>
     <script>
-      function markAllAsRead() {
-        fetch('/client/api/notifications/read-all', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-          }
-        }).then(() => {
-          window.location.reload();
+      function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          background: ${type === 'error' ? '#ef4444' : '#10b981'};
+          color: #fff;
+          padding: 12px 20px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 600;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+          z-index: 9999;
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
         });
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(20px)';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      async function markAllAsRead() {
+        const btn = document.querySelector('.head-actions .btn');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Marquage...';
+        }
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        try {
+          const res = await fetch('/client/api/notifications/read-all', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrf,
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!res.ok) {
+            throw new Error('Erreur ' + res.status);
+          }
+
+          const container = document.getElementById('notificationsContainer');
+          if (container) {
+            const unreadCards = container.querySelectorAll('.notif-card.unread');
+            unreadCards.forEach(card => {
+              card.classList.remove('unread');
+            });
+
+            const children = Array.from(container.children);
+            const unreadHeader = children.find(el => el.textContent.trim().startsWith('Non lues'));
+            const readHeader = children.find(el => el.textContent.trim().startsWith('Déjà lues'));
+            const totalCards = container.querySelectorAll('.notif-card').length;
+
+            if (unreadHeader) {
+              if (readHeader) {
+                unreadHeader.remove();
+              } else if (totalCards > 0) {
+                unreadHeader.textContent = 'Déjà lues (' + totalCards + ')';
+                unreadHeader.style.margin = '16px 0 10px';
+              } else {
+                unreadHeader.remove();
+              }
+            }
+
+            if (totalCards === 0 && !container.querySelector('.empty-state')) {
+              container.innerHTML = `
+                <div class="empty-state">
+                  <i class="fas fa-bell-slash"></i>
+                  <h3>Aucune notification</h3>
+                  <p>Vous n'avez aucune notification pour le moment.</p>
+                </div>
+              `;
+            }
+          }
+
+          const badge = document.getElementById('notifBadge');
+          if (badge) {
+            badge.textContent = '0';
+            badge.style.display = 'none';
+          }
+
+          const notifList = document.getElementById('notifList');
+          if (notifList) {
+            notifList.innerHTML = '<div class="notif-empty"><i class="fas fa-check-circle" style="font-size:24px;display:block;margin-bottom:8px;color:#10b981"></i>Toutes les notifications sont lues</div>';
+          }
+
+          showToast('Toutes les notifications ont été marquées comme lues.', 'success');
+        } catch (err) {
+          console.error('Erreur markAllAsRead:', err);
+          showToast('Une erreur est survenue. Veuillez réessayer.', 'error');
+        } finally {
+          const btn = document.querySelector('.head-actions .btn');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Tout marquer comme lu';
+          }
+        }
       }
 
       function deleteNotification(id) {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+          const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
           fetch(`/client/api/notifications/${id}`, {
             method: 'DELETE',
             headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'X-CSRF-TOKEN': csrf,
               'Accept': 'application/json'
             }
           }).then(() => {

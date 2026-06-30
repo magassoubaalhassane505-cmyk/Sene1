@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ asset('assets/css/base.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/rentabilite.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/visual-harmony.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/rentabilite-premium.css') }}" />
      <link rel="stylesheet" href="{{ asset('assets/css/region-filter.css') }}" />
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
      
@@ -1209,11 +1210,12 @@
               const profitElement = document.getElementById('profitKpi');   
               const marginElement = document.getElementById('marginKpi');    
 
-              // VALEURS INITIALES - Mises à jour pour correspondre au tableau de récoltes
-              const salesValue = 16908000;  // 16 908 000 FCFA (mis à jour)
-              const costValue = 2900000;     // 2 900 000 FCFA  
-              const profitValue = -1970000;  // -1 970 000 FCFA
-              const marginValue = -211.2;    // -211,2%
+              // VALEURS INITIALES - Issues des vraies donnees serveur
+              const serverData = window.SeneBI_RENTABILITE || {};
+              const salesValue = {{ $totalCA }};  // Chiffre d'affaires reel
+              const costValue = {{ $totalCouts }};     // Couts reels
+              const profitValue = {{ $totalBenefice }};  // Benefice reel
+              const marginValue = parseFloat(({{ $margeMoyenne }}).toFixed(1));    // Marge reelle
 
               // Formatage épuré - Vert pour CA, Rouge pour le reste
               function formatFCFA(amount, isSales = false) {
@@ -1529,13 +1531,16 @@
             setTimeout(() => {
               transformerKPI();
               
-              // RÉAPPLIQUER LA PHRASE EXPlicative APRÈS la transformation
-              setTimeout(() => {
-                const explanationDiv = document.querySelector('#marginKpi').nextElementSibling;
-                if (explanationDiv && explanationDiv.classList.contains('explanation')) {
-                  const marginValue = -211.2;
-                  const explanation = `Vous perdez ${Math.abs(marginValue * 10).toLocaleString('fr-FR')} FCFA pour chaque 1 000 FCFA gagnés.`;
-                  explanationDiv.textContent = explanation;
+               // RÉAPPLIQUER LA PHRASE EXPlicative APRÈS la transformation
+               setTimeout(() => {
+                 const explanationDiv = document.querySelector('#marginKpi').nextElementSibling;
+                 if (explanationDiv && explanationDiv.classList.contains('explanation')) {
+                   const marginVal = parseFloat(marginValue) || 0;
+                   const lossPer1000 = Math.abs(marginVal * 10);
+                   const explanation = marginVal < 0
+                     ? `Vous perdez ${lossPer1000.toLocaleString('fr-FR')} FCFA pour chaque 1 000 FCFA gagnés.`
+                     : `Gain de ${lossPer1000.toLocaleString('fr-FR')} FCFA pour chaque 1 000 FCFA.`;
+                   explanationDiv.textContent = explanation;
                   
                   // FORCER LES STYLES
                   explanationDiv.style.fontSize = '0.7rem';
@@ -1622,213 +1627,202 @@
 </article>
         </section>
 
-        <!-- ============================================
-             SECTION 1: PRÉVISIONS FINANCIÈRES
-             ============================================ -->
-<section class="card forecasts-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
-             <h3 class="section-title">Prévisions Financières</h3>
-           </div>
-           <div class="forecasts-grid">
-             <div class="forecast-card">
-               <span class="forecast-label">Revenu prévisionnel mensuel</span>
-               <span class="forecast-value" id="revenuPrevisionnel">{{ number_format($moyenneMensuelleCA, 0, ',', ' ') }} FCFA</span>
-             </div>
-             <div class="forecast-card">
-               <span class="forecast-label">Bénéfice estimé mensuel</span>
-               <span class="forecast-value" id="beneficeEstime">{{ number_format($moyenneMensuelleBenefice, 0, ',', ' ') }} FCFA</span>
-             </div>
-             <div class="forecast-card">
-               <span class="forecast-label">Tendance financière</span>
-               <span class="forecast-value {{ $tendanceFinanciere >= 0 ? 'positive' : 'negative' }}" id="tendanceFinanciere">
-                 <i class="fas fa-arrow-{{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}"></i> {{ number_format($tendanceFinanciere, 1, ',', ' ') }}%
-               </span>
-             </div>
-           </div>
-           
-           <div class="projections-content">
-             <div class="projections-header">
-               <div class="header-icon">
-                 <i class="fas fa-calendar-alt"></i>
-               </div>
-               <h3>Projection sur les prochains mois</h3>
-             </div>
-             
-             <div class="projections-summary-cards">
-               <div class="projection-summary-card">
-                 <div class="summary-icon revenue">
-                   <i class="fas fa-euro-sign"></i>
-                 </div>
-                 <span class="projection-summary-label">Revenu Moyen</span>
-                 <span class="projection-summary-value positive" id="summaryRevenu">{{ number_format($moyenneMensuelleCA, 0, ',', ' ') }} FCFA</span>
-               </div>
-               <div class="projection-summary-card">
-                 <div class="summary-icon benefice">
-                   <i class="fas fa-piggy-bank"></i>
-                 </div>
-                 <span class="projection-summary-label">Bénéfice Moyen</span>
-                 <span class="projection-summary-value {{ $moyenneMensuelleBenefice >= 0 ? 'positive' : 'negative' }}" id="summaryBenefice">{{ number_format($moyenneMensuelleBenefice, 0, ',', ' ') }} FCFA</span>
-               </div>
-               <div class="projection-summary-card">
-                 <div class="summary-icon {{ $tendanceFinanciere >= 0 ? 'tendance-up' : 'tendance-down' }}">
-                   <i class="fas fa-arrow-{{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}"></i>
-                 </div>
-                 <span class="projection-summary-label">Tendance</span>
-                 <span class="projection-summary-value {{ $tendanceFinanciere >= 0 ? 'positive' : 'negative' }}" id="summaryTendance">{{ number_format($tendanceFinanciere, 1, ',', ' ') }}%</span>
-               </div>
-               <div class="projection-summary-card">
-                 <div class="summary-icon benefice">
-                   <i class="fas fa-seedling"></i>
-                 </div>
-                 <span class="projection-summary-label">Total Projections</span>
-                 <span class="projection-summary-value positive" id="totalProjections">{{ number_format(array_sum(array_column($projections, 'revenu')), 0, ',', ' ') }} FCFA</span>
-               </div>
-             </div>
-             
-             <div class="projections-monthly-grid">
-               @foreach($projections as $index => $proj)
-                 <div class="projection-monthly-card upcoming">
-                   <div class="projection-month-header">
-                     <span class="projection-month-title">{{ $proj['mois'] }}</span>
-                     <div class="projection-month-icon">
-                       <i class="fas fa-calendar-day"></i>
-                     </div>
-                   </div>
-                   
-                   <div class="projection-financial-details">
-                     <div class="projection-financial-item">
-                       <span class="projection-financial-label">
-                         <i class="fas fa-euro-sign"></i> Revenu
-                       </span>
-                       <span class="projection-financial-amount revenue">{{ number_format($proj['revenu'], 0, ',', ' ') }} FCFA</span>
-                     </div>
-                     <div class="projection-financial-item">
-                       <span class="projection-financial-label">
-                         <i class="fas fa-hand-holding-usd"></i> Bénéfice
-                       </span>
-                       <span class="projection-financial-amount {{ $proj['benefice'] >= 0 ? 'benefice-positive' : 'benefice-negative' }}">{{ number_format($proj['benefice'], 0, ',', ' ') }} FCFA</span>
-                     </div>
-                   </div>
-                   
-                   <div class="projection-trend-indicator">
-                     <span class="projection-trend-badge {{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}">
-                       <i class="fas fa-arrow-{{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}"></i>
-                       {{ $tendanceFinanciere >= 0 ? 'Hausse' : 'Baisse' }}
-                     </span>
-                   </div>
-                 </div>
-               @endforeach
-             </div>
-</div>
-            </div>
-          </section>
- 
-         <!-- ============================================
-              SECTION 2: COMPARAISON HISTORIQUE
+<!-- ============================================
+              SECTION 1: PRÉVISIONS FINANCIÈRES
               ============================================ -->
-          <section class="card comparison-section">
-            <div class="card-header">
-              <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-exchange-alt"></i></div>
-              <h3 class="section-title">Comparaison Historique</h3>
+        <section class="forecasts-section">
+          <div class="card-header--premium">
+            <div class="icon-box" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
+            <h3 class="section-title--premium">Prévisions Financières</h3>
+          </div>
+          
+          <div class="forecasts-grid--premium">
+            <div class="forecast-card--premium">
+              <span class="forecast-label--premium">Revenu prévisionnel mensuel</span>
+              <span class="forecast-value--premium" id="revenuPrevisionnel">{{ number_format($moyenneMensuelleCA, 0, ',', ' ') }} FCFA</span>
             </div>
-           <div class="comparison-grid">
-             <div class="comparison-card">
-               <h3>Saison actuelle vs Précédente</h3>
-               <div class="comparison-values">
-                 <div>
-                   <span class="comparison-label">CA Actuel</span>
-                   <span class="comparison-value">{{ number_format($caSaisonActuelle, 0, ',', ' ') }} FCFA</span>
-                 </div>
-                 <div>
-                   <span class="comparison-label">CA Précédent</span>
-                   <span class="comparison-value">{{ number_format($caSaisonPrecedente, 0, ',', ' ') }} FCFA</span>
-                 </div>
-                 <div>
-                   <span class="comparison-label">Variation</span>
-                   <span class="comparison-var {{ $varSaisonCA >= 0 ? 'positive' : 'negative' }}">
-                     <i class="fas fa-arrow-{{ $varSaisonCA >= 0 ? 'up' : 'down' }}"></i> {{ number_format($varSaisonCA, 1, ',', ' ') }}%
-                   </span>
-                 </div>
-               </div>
-             </div>
-             <div class="comparison-card">
-               <h3>Année actuelle vs Précédente</h3>
-               <div class="comparison-values">
-                 <div>
-                   <span class="comparison-label">CA Actuel</span>
-                   <span class="comparison-value">{{ number_format($caAnneeActuelle, 0, ',', ' ') }} FCFA</span>
-                 </div>
-                 <div>
-                   <span class="comparison-label">CA Précédent</span>
-                   <span class="comparison-value">{{ number_format($caAnneePrecedente, 0, ',', ' ') }} FCFA</span>
-                 </div>
-                 <div>
-                   <span class="comparison-label">Variation</span>
-                   <span class="comparison-var {{ $varAnneeCA >= 0 ? 'positive' : 'negative' }}">
-                     <i class="fas fa-arrow-{{ $varAnneeCA >= 0 ? 'up' : 'down' }}"></i> {{ number_format($varAnneeCA, 1, ',', ' ') }}%
-                   </span>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </section>
-
-         <!-- ============================================
-              SECTION 3: RÉPARTITION DES COÛTS
-              ============================================ -->
-         <section class="card costs-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-pie-chart"></i></div>
-             <h3 class="section-title">Répartition des Coûts</h3>
-           </div>
-          <div class="costs-grid">
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-seedling"></i> Engrais</span>
-              <span class="cost-value">{{ number_format($coutsEngrais, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsEngrais / $totalCouts * 100) : 0 }}%"></div></div>
+            <div class="forecast-card--premium">
+              <span class="forecast-label--premium">Bénéfice estimé mensuel</span>
+              <span class="forecast-value--premium {{ $moyenneMensuelleBenefice >= 0 ? 'positive' : 'negative' }}" id="beneficeEstime">{{ number_format($moyenneMensuelleBenefice, 0, ',', ' ') }} FCFA</span>
             </div>
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-leaf"></i> Semences</span>
-              <span class="cost-value">{{ number_format($coutsSemences, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsSemences / $totalCouts * 100) : 0 }}%"></div></div>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-spray-can"></i> Herbicides</span>
-              <span class="cost-value">{{ number_format($coutsHerbicides, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsHerbicides / $totalCouts * 100) : 0 }}%"></div></div>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-users"></i> Main-d'œuvre</span>
-              <span class="cost-value">{{ number_format($coutsMainOeuvre, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsMainOeuvre / $totalCouts * 100) : 0 }}%"></div></div>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-truck"></i> Transport</span>
-              <span class="cost-value">{{ number_format($coutsTransport, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsTransport / $totalCouts * 100) : 0 }}%"></div></div>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label"><i class="fas fa-ellipsis-h"></i> Autres coûts</span>
-              <span class="cost-value">{{ number_format($coutsAutres, 0, ',', ' ') }} FCFA</span>
-              <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsAutres / $totalCouts * 100) : 0 }}%"></div></div>
+            <div class="forecast-card--premium">
+              <span class="forecast-label--premium">Tendance financière</span>
+              <span class="forecast-value--premium {{ $tendanceFinanciere >= 0 ? 'positive' : 'negative' }}" id="tendanceFinanciere">
+                <i class="fas fa-arrow-{{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}"></i> {{ number_format($tendanceFinanciere, 1, ',', ' ') }}%
+              </span>
             </div>
           </div>
-          <div class="cost-chart-wrap">
-            <canvas id="costsChart"></canvas>
+          
+          <!-- Timeline Chart for Projections -->
+          <div class="timeline-chart-wrapper">
+            <canvas id="projectionTimelineChart"></canvas>
+          </div>
+          
+          <div class="projections-summary-cards--premium">
+            <div class="projection-summary-card--premium">
+              <div class="icon-box" aria-hidden="true"><i class="fas fa-euro-sign"></i></div>
+              <span class="forecast-label--premium">Revenu Moyen</span>
+              <span class="forecast-value--premium positive" id="summaryRevenu">{{ number_format($moyenneMensuelleCA, 0, ',', ' ') }} FCFA</span>
+            </div>
+            <div class="projection-summary-card--premium">
+              <div class="icon-box purple" aria-hidden="true"><i class="fas fa-piggy-bank"></i></div>
+              <span class="forecast-label--premium">Bénéfice Moyen</span>
+              <span class="forecast-value--premium {{ $moyenneMensuelleBenefice >= 0 ? 'positive' : 'negative' }}" id="summaryBenefice">{{ number_format($moyenneMensuelleBenefice, 0, ',', ' ') }} FCFA</span>
+            </div>
+            <div class="projection-summary-card--premium">
+              <div class="icon-box {{ $tendanceFinanciere >= 0 ? 'green' : 'red' }}" aria-hidden="true"><i class="fas fa-arrow-{{ $tendanceFinanciere >= 0 ? 'up' : 'down' }}"></i></div>
+              <span class="forecast-label--premium">Tendance</span>
+              <span class="forecast-value--premium {{ $tendanceFinanciere >= 0 ? 'positive' : 'negative' }}" id="summaryTendance">{{ number_format($tendanceFinanciere, 1, ',', ' ') }}%</span>
+            </div>
+            <div class="projection-summary-card--premium">
+              <div class="icon-box purple" aria-hidden="true"><i class="fas fa-seedling"></i></div>
+              <span class="forecast-label--premium">Total Projections</span>
+              <span class="forecast-value--premium positive" id="totalProjections">{{ number_format(array_sum(array_column($projections, 'revenu')), 0, ',', ' ') }} FCFA</span>
+            </div>
           </div>
         </section>
+ 
+<!-- ============================================
+               SECTION 2: COMPARAISON HISTORIQUE
+               ============================================ -->
+          <section class="comparison-section">
+            <div class="card-header--premium">
+              <div class="icon-box" aria-hidden="true"><i class="fas fa-exchange-alt"></i></div>
+              <h3 class="section-title--premium">Comparaison Historique</h3>
+            </div>
+            <div class="comparison-grid--premium">
+              <div class="comparison-card--premium">
+                <h3>Saison actuelle vs Précédente</h3>
+                <div class="comparison-values">
+                  <div>
+                    <span class="comparison-label">CA Actuel</span>
+                    <span class="comparison-value">{{ number_format($caSaisonActuelle, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div>
+                    <span class="comparison-label">CA Précédent</span>
+                    <span class="comparison-value">{{ number_format($caSaisonPrecedente, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div>
+                    <span class="comparison-label">Variation</span>
+                    <span class="comparison-var--premium {{ $varSaisonCA >= 0 ? 'positive' : 'negative' }}">
+                      <i class="fas fa-arrow-{{ $varSaisonCA >= 0 ? 'up' : 'down' }}"></i> {{ number_format($varSaisonCA, 1, ',', ' ') }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="comparison-card--premium">
+                <h3>Année actuelle vs Précédente</h3>
+                <div class="comparison-values">
+                  <div>
+                    <span class="comparison-label">CA Actuel</span>
+                    <span class="comparison-value">{{ number_format($caAnneeActuelle, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div>
+                    <span class="comparison-label">CA Précédent</span>
+                    <span class="comparison-value">{{ number_format($caAnneePrecedente, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div>
+                    <span class="comparison-label">Variation</span>
+                    <span class="comparison-var--premium {{ $varAnneeCA >= 0 ? 'positive' : 'negative' }}">
+                      <i class="fas fa-arrow-{{ $varAnneeCA >= 0 ? 'up' : 'down' }}"></i> {{ number_format($varAnneeCA, 1, ',', ' ') }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-        <!-- ============================================
-             SECTION 4: BADGE DE PERFORMANCE
-             ============================================ -->
-         <section class="card performance-badge-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-award"></i></div>
-             <h3 class="section-title">Performance de l'Exploitation</h3>
-           </div>
-           <div class="badge-display">
-             <span class="perf-badge {{ $badgePerformance['class'] }} large">
+<!-- ============================================
+               SECTION 3: RÉPARTITION DES COÛTS
+               ============================================ -->
+          <section class="costs-section">
+            <div class="card-header--premium">
+              <div class="icon-box" aria-hidden="true"><i class="fas fa-pie-chart"></i></div>
+              <h3 class="section-title--premium">Répartition des Coûts</h3>
+            </div>
+            <div class="costs-content--premium">
+              <div class="costs-chart-wrapper--premium">
+                <div class="costs-chart-container">
+                  <canvas id="costsDonutChart"></canvas>
+                </div>
+                <div class="costs-legend--premium">
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #3b82f6;"></span>
+                    <span class="costs-legend-label">Engrais</span>
+                    <span class="costs-legend-value">{{ number_format($coutsEngrais, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #10b981;"></span>
+                    <span class="costs-legend-label">Semences</span>
+                    <span class="costs-legend-value">{{ number_format($coutsSemences, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #f59e0b;"></span>
+                    <span class="costs-legend-label">Herbicides</span>
+                    <span class="costs-legend-value">{{ number_format($coutsHerbicides, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #8b5cf6;"></span>
+                    <span class="costs-legend-label">Main-d'œuvre</span>
+                    <span class="costs-legend-value">{{ number_format($coutsMainOeuvre, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #ec4899;"></span>
+                    <span class="costs-legend-label">Transport</span>
+                    <span class="costs-legend-value">{{ number_format($coutsTransport, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                  <div class="costs-legend-item--premium">
+                    <span class="costs-legend-dot--premium" style="background: #6b7280;"></span>
+                    <span class="costs-legend-label">Autres coûts</span>
+                    <span class="costs-legend-value">{{ number_format($coutsAutres, 0, ',', ' ') }} FCFA</span>
+                  </div>
+                </div>
+              </div>
+              <div class="costs-grid">
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-seedling"></i> Engrais</span>
+                  <span class="cost-value">{{ number_format($coutsEngrais, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsEngrais / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-leaf"></i> Semences</span>
+                  <span class="cost-value">{{ number_format($coutsSemences, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsSemences / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-spray-can"></i> Herbicides</span>
+                  <span class="cost-value">{{ number_format($coutsHerbicides, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsHerbicides / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-users"></i> Main-d'œuvre</span>
+                  <span class="cost-value">{{ number_format($coutsMainOeuvre, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsMainOeuvre / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-truck"></i> Transport</span>
+                  <span class="cost-value">{{ number_format($coutsTransport, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsTransport / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-label"><i class="fas fa-ellipsis-h"></i> Autres coûts</span>
+                  <span class="cost-value">{{ number_format($coutsAutres, 0, ',', ' ') }} FCFA</span>
+                  <div class="cost-bar"><div class="cost-fill" style="width: {{ $totalCouts > 0 ? ($coutsAutres / $totalCouts * 100) : 0 }}%"></div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+<!-- ============================================
+              SECTION 4: BADGE DE PERFORMANCE
+              ============================================ -->
+        <section class="performance-badge-section">
+          <div class="card-header--premium">
+            <div class="icon-box" aria-hidden="true"><i class="fas fa-award"></i></div>
+            <h3 class="section-title--premium">Performance de l'Exploitation</h3>
+          </div>
+          <div class="badge-display--premium">
+            <span class="perf-badge--premium {{ $badgePerformance['class'] }}">
               <i class="fas {{ $badgePerformance['icon'] }}"></i> {{ $badgePerformance['label'] }}
             </span>
           </div>
@@ -1837,25 +1831,28 @@
         <!-- ============================================
              SECTION 5: TOP 3 CULTURES RENTABLES
              ============================================ -->
-         <section class="card top-cultures-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-seedling"></i></div>
-             <h3 class="section-title">Top 3 Cultures les plus Rentables</h3>
-           </div>
-          <div class="top-cultures-grid">
+        <section class="top-cultures-section">
+          <div class="card-header--premium">
+            <div class="icon-box" aria-hidden="true"><i class="fas fa-seedling"></i></div>
+            <h3 class="section-title--premium">Top 3 Cultures les plus Rentables</h3>
+          </div>
+          <div class="top-cultures-grid--premium">
             @if($topCultures->count() > 0)
               @foreach($topCultures as $index => $culture)
-                <div class="top-culture-card rank-{{ $index + 1 }}">
-                  <div class="rank-badge">{{ $index + 1 }}</div>
+                <div class="top-culture-card--premium rank-{{ $index + 1 }}">
+                  <div class="rank-badge--premium">{{ $index + 1 }}</div>
                   <div class="culture-info">
-                    <span class="culture-name">{{ $culture->culture }}</span>
-                    <span class="culture-benefice">{{ number_format($culture->benefice_total, 0, ',', ' ') }} FCFA</span>
+                    <span class="culture-name--premium">{{ $culture->culture }}</span>
+                    <span class="culture-benefice--premium">{{ number_format($culture->benefice_total, 0, ',', ' ') }} FCFA</span>
                     <span class="culture-ca">CA: {{ number_format($culture->chiffre_affaires, 0, ',', ' ') }} FCFA</span>
                   </div>
                 </div>
               @endforeach
             @else
-              <div class="no-data">Aucune culture rentable enregistrée</div>
+              <div class="empty-state--premium">
+                <i class="fas fa-chart-line"></i>
+                <p>Aucune culture rentable enregistrée</p>
+              </div>
             @endif
           </div>
         </section>
@@ -1863,12 +1860,12 @@
         <!-- ============================================
              SECTION 6: RECOMMANDATIONS IA
              ============================================ -->
-         <section class="card ai-recommendations-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-robot"></i></div>
-             <h3 class="section-title">Recommandations IA Financières</h3>
-           </div>
-          <div id="aiRecommendationsList" class="ai-recommendations-list">
+        <section class="ai-recommendations-section">
+          <div class="card-header--premium">
+            <div class="icon-box purple" aria-hidden="true"><i class="fas fa-robot"></i></div>
+            <h3 class="section-title--premium">Recommandations IA Financières</h3>
+          </div>
+          <div id="aiRecommendationsList" class="ai-recommendations-list--premium">
             <!-- Les recommandations seront générées par JavaScript -->
           </div>
         </section>
@@ -1876,14 +1873,14 @@
         <!-- ============================================
              SECTION 7: HISTORIQUE EXPORTS PDF
              ============================================ -->
-         <section class="card pdf-history-section">
-           <div class="card-header">
-             <div class="card-icon icon-box" aria-hidden="true"><i class="fas fa-history"></i></div>
-             <h3 class="section-title">Historique des Exports PDF</h3>
-           </div>
+        <section class="pdf-history-section">
+          <div class="card-header--premium">
+            <div class="icon-box" aria-hidden="true"><i class="fas fa-history"></i></div>
+            <h3 class="section-title--premium">Historique des Exports PDF</h3>
+          </div>
           @if($pdfHistory->count() > 0)
-            <div class="table-wrap">
-              <table class="table">
+            <div class="pdf-table-wrap">
+              <table class="pdf-history-table--premium">
                 <thead>
                   <tr>
                     <th>Date d'export</th>
@@ -1907,7 +1904,10 @@
               </table>
             </div>
           @else
-            <p class="no-history">Aucun export PDF pour le moment. Générez votre premier rapport ci-dessous.</p>
+            <div class="empty-state--premium">
+              <i class="fas fa-file-pdf"></i>
+              <p>Aucun export PDF pour le moment. Générez votre premier rapport ci-dessous.</p>
+            </div>
           @endif
         </section>
 
@@ -2033,7 +2033,13 @@
           autres: {{ $coutsAutres }}
         },
         topCultures: @json($topCultures),
-        pdfHistory: @json($pdfHistory)
+        cultureYields: @json($cultureYields),
+        parcellesData: @json($parcellesData),
+        pdfHistory: @json($pdfHistory),
+        business: {
+          salesFcfa: {{ $totalCA }},
+          intrantsCostFcfa: {{ $totalCouts }},
+        }
       };
     </script>
     <script src="{{ asset('assets/js/rentabilite.js') }}"></script>
@@ -2294,16 +2300,17 @@
         generateAIAdvice();
         setInterval(generateAIAdvice, 30000);
         
-        // Initialiser le graphique des coûts
+        // Initialiser les graphiques premium
         initCostsChart();
+        initProjectionTimelineChart();
         
         // Générer les recommandations IA financières
         generateFinancialRecommendations();
       });
       
-      // GRAPHIQUE DES COÛTS
+      // GRAPHIQUE DES COÛTS DONUT
       function initCostsChart() {
-        const ctx = document.getElementById('costsChart');
+        const ctx = document.getElementById('costsDonutChart');
         if (ctx) {
           new Chart(ctx, {
             type: 'doughnut',
@@ -2312,24 +2319,119 @@
               datasets: [{
                 data: [{{ $coutsEngrais }}, {{ $coutsSemences }}, {{ $coutsHerbicides }}, {{ $coutsMainOeuvre }}, {{ $coutsTransport }}, {{ $coutsAutres }}],
                 backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6b7280'],
-                borderWidth: 2,
-                borderColor: '#fff'
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 8
               }]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              cutout: '65%',
               plugins: {
                 legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 12, padding: 16, font: { size: 11 } }
+                  display: false
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                  padding: 12,
+                  cornerRadius: 10,
+                  callbacks: {
+                    label(ctx) {
+                      const label = ctx.label || '';
+                      const value = ctx.parsed || 0;
+                      return `${label}: ${value.toLocaleString('fr-FR')} FCFA`;
+                    }
+                  }
                 }
+              },
+              animation: {
+                animateScale: true,
+                animateRotate: true
               }
             }
           });
         }
       }
-      
+
+      // GRAPHIQUE TIMELINE DES PROJECTIONS
+      function initProjectionTimelineChart() {
+        const ctx = document.getElementById('projectionTimelineChart');
+        if (!ctx) return;
+        
+        const labels = @json(collect($projections)->pluck('mois')->toArray() ?: []);
+        const revenues = @json(collect($projections)->pluck('revenu')->toArray() ?: []);
+        const profits = @json(collect($projections)->pluck('benefice')->toArray() ?: []);
+        
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Revenu',
+                data: revenues,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+              },
+              {
+                label: 'Bénéfice',
+                data: profits,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#8b5cf6',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  boxWidth: 12,
+                  padding: 20,
+                  font: { size: 12, weight: '600' }
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                padding: 12,
+                cornerRadius: 10
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(15, 23, 42, 0.07)' },
+                ticks: {
+                  callback: (v) => v.toLocaleString('fr-FR')
+                }
+              },
+x: {
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
       // RECOMMANDATIONS IA FINANCIÈRES MULTIPLES
       function generateFinancialRecommendations() {
         const container = document.getElementById('aiRecommendationsList');
@@ -2368,10 +2470,10 @@
           ];
         }
         
-        container.innerHTML = recommendations.map(rec => `
-          <div class="ai-recommendation-item">
-            <div class="ai-recommendation-icon"><i class="fas ${rec.icon}"></i></div>
-            <p class="ai-recommendation-text">${rec.text}</p>
+container.innerHTML = recommendations.map(rec => `
+          <div class="ai-recommendation-item--premium">
+            <div class="ai-recommendation-icon--premium"><i class="fas ${rec.icon}"></i></div>
+            <p class="ai-recommendation-text--premium">${rec.text}</p>
           </div>
         `).join('');
       }

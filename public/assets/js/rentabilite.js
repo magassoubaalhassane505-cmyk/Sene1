@@ -325,8 +325,18 @@
     if (cCanvas) {
       const existing = Chart.getChart(cCanvas);
       if (existing) existing.destroy();
-      const cultureLabels = ["Riz", "Mais", "Coton"];
-      const cultureVals = [10.5, 6.4, 4.2];
+
+      const serverCultureYields = window.SeneBI_RENTABILITE?.cultureYields;
+      let cultureLabels, cultureVals;
+
+      if (Array.isArray(serverCultureYields) && serverCultureYields.length > 0) {
+        cultureLabels = serverCultureYields.map(c => c.culture);
+        cultureVals = serverCultureYields.map(c => c.rendement);
+      } else {
+        cultureLabels = ["Riz", "Mais", "Coton"];
+        cultureVals = [10.5, 6.4, 4.2];
+      }
+
       const yMaxC = Math.ceil(Math.max(...cultureVals, 1) * 11) / 10;
 
       new Chart(cCanvas, {
@@ -391,10 +401,22 @@
     const marginStatus = SeneBI.qs("#marginStatus");
     const compareEl = SeneBI.qs("#seasonCompareText");
 
-    if (salesKpi) salesKpi.textContent = fmtM(business.salesFcfa);
-    if (costKpi) costKpi.textContent = fmtM(business.intrantsCostFcfa);
-    if (profitKpi) profitKpi.textContent = fmtM(profit);
-    if (marginKpi) marginKpi.textContent = `${margin.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    if (salesKpi) {
+      const numberEl = salesKpi.querySelector('.number');
+      if (numberEl) numberEl.textContent = fmtM(business.salesFcfa);
+    }
+    if (costKpi) {
+      const numberEl = costKpi.querySelector('.number');
+      if (numberEl) numberEl.textContent = fmtM(business.intrantsCostFcfa);
+    }
+    if (profitKpi) {
+      const numberEl = profitKpi.querySelector('.number');
+      if (numberEl) numberEl.textContent = fmtM(profit);
+    }
+    if (marginKpi) {
+      const numberEl = marginKpi.querySelector('.number');
+      if (numberEl) numberEl.textContent = `${margin.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    }
     if (marginStatus) {
       if (margin >= 25) {
         marginStatus.textContent = "Tres rentable";
@@ -574,12 +596,24 @@
       return;
     }
     
-    // Dictionnaire intelligent des parcelles adapté aux nouvelles listes
-    const parcelleData = {
-      'Parcelle Nord': { surface: 5.5, intrants: 2500000, other: 400000 },
-      'Parcelle Centre': { surface: 3.2, intrants: 1800000, other: 300000 },
-      'Parcelle Sud': { surface: 4.8, intrants: 3200000, other: 500000 }
-    };
+    // Dictionnaire intelligent des parcelles - Donnees reelles du serveur
+    const serverParcelles = window.SeneBI_RENTABILITE?.parcellesData || [];
+    const parcelleData = serverParcelles.length > 0
+      ? serverParcelles.reduce((acc, p) => {
+          const nom = p.nom || '';
+          const baseName = nom.replace(/^Parcelle\s+/i, '').trim();
+          acc[baseName] = {
+            surface: Number(p.surface) || 0,
+            intrants: 0,
+            other: 0
+          };
+          return acc;
+        }, {})
+      : {
+          'Parcelle Nord': { surface: 5.5, intrants: 2500000, other: 400000 },
+          'Parcelle Centre': { surface: 3.2, intrants: 1800000, other: 300000 },
+          'Parcelle Sud': { surface: 4.8, intrants: 3200000, other: 500000 }
+        };
     
     // Fonction pour récupérer intelligemment les données de la parcelle
     function smartFillParcelleData(parcelleName, cultureName) {

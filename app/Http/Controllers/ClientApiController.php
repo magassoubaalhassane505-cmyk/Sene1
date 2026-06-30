@@ -509,12 +509,19 @@ class ClientApiController extends Controller
         
         $user = Auth::user();
         
+        $pdfService = new \App\Services\PdfExportService($user);
+        $html = $pdfService->generateRentabiliteReport();
+        
         $pdfExport = \App\Models\PdfExport::create([
             'user_id' => $user->id,
             'type' => $data['type'],
             'file_path' => "exports/rentabilite-{$user->id}-" . now()->format('YmdHis') . ".pdf",
         ]);
         
-        return response()->json(['data' => $pdfExport, 'success' => true]);
+        return response()->json([
+            'data' => $pdfExport, 
+            'success' => true,
+            'html_content' => $html
+        ]);
     }
 }

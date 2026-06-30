@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/base.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/dashboard.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/visual-harmony.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/risk-farmers-premium.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/region-filter.css') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
@@ -497,71 +498,138 @@ Tous les indicateurs sont bons.
          </section>
 
          <!-- Section Agriculteurs à Risque - pleine largeur -->
-         <section style="margin-top: 24px;">
-           <article class="card" style="display: flex; flex-direction: column; border-top: 3px solid #ef4444;">
-             <div class="card-header">
-               <div style="display: flex; align-items: center; gap: 12px;">
-                  <div class="icon-box-sm icon-box red" style="display: inline-flex;">
-                    <i class="fas fa-exclamation-triangle"></i>
+<!-- ============================================
+              SECTION : AGRICULTEURS À RISQUE (PREMIUM)
+              ============================================ -->
+          <section class="risk-section--premium">
+            <article class="card">
+              <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
+                <div class="card-header--premium">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="icon-box red" aria-hidden="true" style="width: 48px; height: 48px; font-size: 20px;">
+                      <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                      <h3 class="section-title--premium">Agriculteurs à Risque</h3>
+                      <p class="section-subtitle">Nécessitent une attention particulière</p>
+                    </div>
                   </div>
-                 <div>
-                   <h3 style="margin:0; font-size:16px; font-weight: 700; color: #111827;">Agriculteurs à Risque</h3>
-                   <div class="small muted">Nécessitent une attention particulière</div>
-                 </div>
-               </div>
-               <span class="badge" style="background: #fef2f2; color: #991b1b; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">{{ $atRiskFarmers->count() }}</span>
-             </div>
-             <div style="flex: 1; padding: 16px;">
-               @if($atRiskFarmers->count() > 0)
-                 <div class="risk-farmers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-                   @foreach($atRiskFarmers as $farmer)
-                     <div class="risk-card" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: all 0.3s ease; animation: fadeUpSoft 0.4s ease both;"
-                          onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 16px 32px rgba(0,0,0,0.08)'; this.style.borderColor='#d1d5db';"
-                          onmouseout="this.style.transform=''; this.style.boxShadow=''; this.style.borderColor='#e5e7eb';">
-                       <div style="display: flex; align-items: center; gap: 12px;">
-                         <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 800; flex-shrink: 0;">
-                           {{ substr($farmer['name'], 0, 2) }}
-                         </div>
-                         <div style="min-width: 0;">
-                           <div style="font-size: 14px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $farmer['name'] }}</div>
-                           <div style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                             <i class="fas fa-map-marker-alt" style="font-size: 10px; color: #ef4444;"></i> {{ $farmer['location'] }}
-                           </div>
-                         </div>
-                       </div>
-                       <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                         @foreach($farmer['risks'] as $risk)
-                           @php
-                             $riskLabels = [
-                               'stock_critique' => 'Stock critique',
-                               'faible_rentabilite' => 'Faible rentabilité',
-                               'faible_activite' => 'Faible activité',
-                             ];
-                             $riskColors = [
-                               'stock_critique' => 'critical',
-                               'faible_rentabilite' => 'warning',
-                               'faible_activite' => 'muted',
-                             ];
-                           @endphp
-                           <span class="badge {{ $riskColors[$risk] ?? 'muted' }}">{{ $riskLabels[$risk] ?? $risk }}</span>
-                         @endforeach
-                       </div>
-                       <div style="font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                         <i class="fas fa-clock" style="font-size: 10px;"></i> Dernière visite : {{ $farmer['last_visit'] }}
-                       </div>
-                       <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #f3f4f6;">
-                         <a href="#" class="btn btn-sm" style="font-size: 12px; padding: 6px 10px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-eye"></i> Détails</a>
-                         <a href="{{ url('/manager/visites') }}" class="btn" style="font-size: 12px; padding: 6px 10px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: #10b981; color: #fff; border: none;"><i class="fas fa-calendar-check"></i> Planifier visite</a>
-                       </div>
-                     </div>
-                   @endforeach
-                 </div>
-               @else
-                 <div style="text-align: center; color: #9ca3af; padding: 24px; font-size: 14px;">Aucun agriculteur à risque détecté.</div>
-               @endif
-             </div>
-           </article>
-         </section>
+                  <span class="risk-counter--premium">
+                    <i class="fas fa-user-exclamation"></i> {{ $atRiskFarmers->count() }}
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Risk Filter Tabs -->
+              <div class="risk-filter-tabs">
+                <button class="risk-filter-tab active" data-filter="all">Tous <span class="count">{{ $atRiskFarmers->count() }}</span></button>
+                <button class="risk-filter-tab" data-filter="critical">Critique <span class="count" id="count-critical">0</span></button>
+                <button class="risk-filter-tab" data-filter="high">Élevé <span class="count" id="count-high">0</span></button>
+                <button class="risk-filter-tab" data-filter="medium">Moyen <span class="count" id="count-medium">0</span></button>
+                <button class="risk-filter-tab" data-filter="low">Faible <span class="count" id="count-low">0</span></button>
+              </div>
+              
+              <div style="flex: 1; padding: 0 24px 24px 24px;">
+                @if($atRiskFarmers->count() > 0)
+                  <div class="risk-farmers-grid--premium">
+                    @foreach($atRiskFarmers as $farmer)
+                      @php
+                        $riskCount = count($farmer['risks']);
+                        if ($riskCount >= 3) {
+                          $riskLevel = 'Critique';
+                          $riskLevelClass = 'critical';
+                          $riskProgress = 90;
+                        } elseif ($riskCount >= 2) {
+                          $riskLevel = 'Élevé';
+                          $riskLevelClass = 'high';
+                          $riskProgress = 65;
+                        } elseif ($riskCount == 1) {
+                          $riskLevel = 'Moyen';
+                          $riskLevelClass = 'medium';
+                          $riskProgress = 40;
+                        } else {
+                          $riskLevel = 'Faible';
+                          $riskLevelClass = 'low';
+                          $riskProgress = 20;
+                        }
+                      @endphp
+                      <div class="risk-card--premium {{ $riskLevelClass }}" data-risk-level="{{ $riskLevelClass }}">
+                        <!-- Card Header -->
+                        <div class="risk-card-header">
+                          <div class="risk-avatar--premium {{ $riskLevelClass }}">
+                            {{ substr($farmer['name'], 0, 2) }}
+                          </div>
+                          <div class="risk-farmer-info">
+                            <h4 class="risk-farmer-name">{{ $farmer['name'] }}</h4>
+                            <div class="risk-farmer-location">
+                              <i class="fas fa-map-marker-alt"></i> {{ $farmer['location'] ?? 'Non spécifié' }}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Risk Badge -->
+                        <span class="risk-badge--premium {{ $riskLevelClass }}">
+                          <i class="fas fa-shield-alt"></i> {{ $riskLevel }}
+                        </span>
+                        
+                        <!-- Risk Progress Bar -->
+                        <div class="risk-progress-wrapper">
+                          <div class="risk-progress-label">
+                            <span>Niveau de risque</span>
+                            <span>{{ $riskLevel }}</span>
+                          </div>
+                          <div class="risk-progress-bar">
+                            <div class="risk-progress-fill {{ $riskLevelClass }}" style="width: {{ $riskProgress }}%"></div>
+                          </div>
+                        </div>
+                        
+                        <!-- Risk Causes -->
+                        <div>
+                          <div class="risk-causes-title">Causes principales :</div>
+                          <div class="risk-causes-list">
+                            @foreach($farmer['risks'] as $risk)
+                              @php
+                                $riskLabels = [
+                                  'stock_critique' => 'Stock critique',
+                                  'faible_rentabilite' => 'Faible rentabilité',
+                                  'faible_activite' => 'Faible activité',
+                                  'negative_profit' => 'Perte financière',
+                                ];
+                              @endphp
+                              <span class="risk-cause-item">
+                                <i class="fas fa-exclamation-circle"></i> {{ $riskLabels[$risk] ?? $risk }}
+                              </span>
+                            @endforeach
+                          </div>
+                        </div>
+                        
+                        <!-- Last Activity -->
+                        <div class="risk-last-activity">
+                          <i class="fas fa-clock"></i>
+                          Dernière activité : {{ $farmer['last_visit'] ?? 'N/A' }}
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="risk-card-actions">
+                          <a href="#" class="btn-details">
+                            <i class="fas fa-eye"></i> Détails
+                          </a>
+                          <a href="{{ url('/manager/visites') }}" class="btn-visit">
+                            <i class="fas fa-calendar-check"></i> Planifier visite
+                          </a>
+                        </div>
+                      </div>
+                    @endforeach
+                  </div>
+                @else
+                  <div class="risk-empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Aucun agriculteur à risque détecté.</p>
+                  </div>
+                @endif
+              </div>
+            </article>
+          </section>
 
          <style>
            @media (max-width: 1024px) {
@@ -601,162 +669,92 @@ Tous les indicateurs sont bons.
     <script src="{{ asset('assets/js/notifications-simple.js') }}"></script>
 
     <script>
-      // Passer les top clients au JavaScript
       window.SeneBI = window.SeneBI || {};
       window.SeneBI.topClients = {{ \Illuminate\Support\Js::from($topClients) }};
+      window.SeneBI_DASHBOARD = {
+        totalHarvestKg: {{ $totalQuantiteRecoltee ?? 0 }},
+        hectaresActifs: {{ round($totalSurface ?? 0, 1) }},
+        rendementMoyen: {{ $totalSurface > 0 ? round(($totalQuantiteRecoltee ?? 0) / $totalSurface, 2) : 0 }},
+        totalCA: {{ $totalCA ?? 0 }},
+        activeClients: {{ $activeClients ?? 0 }},
+        culturesLabels: {{ \Illuminate\Support\Js::from($productionParCulture->pluck('culture')) }},
+        culturesData: {{ \Illuminate\Support\Js::from($productionParCulture->pluck('total_quantite')) }},
+        alertesParType: {{ \Illuminate\Support\Js::from($alertesParType) }},
+      };
     </script>
     
     <!-- Script d'automatisation du Dashboard Manager -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        // SCRIPT DE CALCUL GLOBAL - AUTOMATISATION DES INDICATEURS
-        function calculateDashboardMetrics() {
-          try {
-            console.log('🔄 Début du calcul des métriques du dashboard...');
-            
-            // 1. Récupérer la liste complète des récoltes dans le localStorage
-            const allHarvests = JSON.parse(localStorage.getItem('total_recolte_senebi') || '[]');
-            console.log('📊 Nombre de récoltes trouvées:', allHarvests.length);
-            
-            // 2. Calculer la somme de toutes les quantités récoltées
-            const totalProduction = allHarvests.reduce((sum, harvest) => {
-              return sum + (parseFloat(harvest.quantite) || 0);
-            }, 0);
-            
-            // 3. Récupérer les prix du catalogue pour calculer le CA
-            const prixCatalogue = {
-              riz: parseFloat(localStorage.getItem('prix_riz')) || 1500,
-              mais: parseFloat(localStorage.getItem('prix_mais')) || 1200,
-              coton: parseFloat(localStorage.getItem('prix_coton')) || 2000
-            };
-            
-            // 4. Calculer le Chiffre d'Affaires total
-            let totalCA = 0;
-            allHarvests.forEach(harvest => {
-              const culture = harvest.culture || 'Non spécifiée';
-              const quantite = parseFloat(harvest.quantite) || 0;
-              let prixUnitaire = 0;
-              
-              switch(culture.toLowerCase()) {
-                case 'riz':
-                  prixUnitaire = prixCatalogue.riz;
-                  break;
-                case 'mais':
-                  prixUnitaire = prixCatalogue.mais;
-                  break;
-                case 'coton':
-                  prixUnitaire = prixCatalogue.coton;
-                  break;
-                default:
-                  prixUnitaire = 1500; // Prix par défaut
-              }
-              
-              totalCA += quantite * prixUnitaire;
-            });
-            
-            // 5. Compter le nombre unique de noms de clients
-            const uniqueClients = new Set();
-            allHarvests.forEach(harvest => {
-              if (harvest.client && harvest.client.trim()) {
-                uniqueClients.add(harvest.client.trim());
-              }
-            });
-            const nombreAgriculteurs = uniqueClients.size;
-            
-            // 6. Mettre à jour visuelle les indicateurs
-            updateKPIDisplay('total-production', totalProduction.toLocaleString('fr-FR'));
-            updateKPIDisplay('ca-estime', (totalCA / 1000000).toFixed(2)); // En millions FCFA
-            updateKPIDisplay('nombre-agriculteurs', nombreAgriculteurs);
-            
-            console.log('✅ Métriques calculées avec succès:');
-            console.log('   🌾 Production totale:', totalProduction.toLocaleString('fr-FR') + ' kg');
-            console.log('   💰 Chiffre d\'Affaires:', (totalCA / 1000000).toFixed(2) + ' M FCFA');
-            console.log('   👥 Agriculteurs actifs:', nombreAgriculteurs);
-            
-            // 7. Mettre à jour les sous-titres avec les données réelles
-            updateKPISubtitles(allHarvests.length, totalProduction, totalCA);
-            
-          } catch (error) {
-            console.error('❌ Erreur lors du calcul des métriques:', error);
-          }
-        }
-        
-        // Fonction pour mettre à jour l'affichage d'un KPI
+        const data = window.SeneBI_DASHBOARD || {};
+
         function updateKPIDisplay(elementId, value) {
           const element = document.getElementById(elementId);
           if (element) {
-            // Animation de comptage si la valeur change
-            const currentValue = element.textContent;
-            if (currentValue !== value.toString()) {
-              animateCounter(element, currentValue, value);
-            }
+            element.textContent = typeof value === 'number' ? value.toLocaleString('fr-FR') : value;
           }
         }
-        
-        // Animation de compteur pour les KPI
-        function animateCounter(element, start, end) {
-          const duration = 1000; // 1 seconde
-          const startTime = performance.now();
-          const startValue = parseFloat(start) || 0;
-          const endValue = parseFloat(end) || 0;
-          
-          function updateCounter(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            const currentValue = startValue + (endValue - startValue) * progress;
-            
-            if (elementId === 'ca-estime') {
-              element.textContent = currentValue.toFixed(2);
-            } else {
-              element.textContent = Math.round(currentValue).toLocaleString('fr-FR');
-            }
-            
-            if (progress < 1) {
-              requestAnimationFrame(updateCounter);
-            }
-          }
-          
-          requestAnimationFrame(updateCounter);
+
+        updateKPIDisplay('total-production', data.totalHarvestKg || 0);
+        updateKPIDisplay('ca-estime', (data.totalCA || 0) / 1000000);
+        updateKPIDisplay('kpiHa', data.hectaresActifs || 0);
+        updateKPIDisplay('nombre-agriculteurs', data.activeClients || 0);
+
+        const insightEl = document.getElementById('dashboardInsight');
+        if (insightEl && data.totalHarvestKg > 0) {
+          insightEl.textContent = `Rendement moyen de ${data.rendementMoyen} t/ha sur ${data.totalHarvestKg.toLocaleString('fr-FR')} kg récoltés et ${data.hectaresActifs} ha actifs.`;
+        } else if (insightEl) {
+          insightEl.textContent = "Les indicateurs sont cohérents : surveillez l'évolution des prix par culture et la répartition des surfaces.";
         }
-        
-        // Mettre à jour les sous-titres des KPI
-        function updateKPISubtitles(harvestCount, totalProduction, totalCA) {
-          // Mettre à jour le sous-titre de production
-          const productionSubtitle = document.querySelector('#total-production').closest('.card').querySelector('.kpi-sub span:last-child');
-          if (productionSubtitle) {
-            productionSubtitle.textContent = `${harvestCount} récolte${harvestCount > 1 ? 's' : ''} enregistrée${harvestCount > 1 ? 's' : ''}`;
-          }
-          
-          // Mettre à jour le sous-titre du CA
-          const caSubtitle = document.querySelector('#ca-estime').closest('.card').querySelector('.kpi-sub span:last-child');
-          if (caSubtitle) {
-            const prixMoyen = totalProduction > 0 ? (totalCA / totalProduction).toFixed(0) : 0;
-            caSubtitle.textContent = `Prix moyen: ${parseInt(prixMoyen).toLocaleString('fr-FR')} FCFA/kg`;
-          }
-          
-          // Mettre à jour le sous-titre des agriculteurs
-          const farmersSubtitle = document.querySelector('#nombre-agriculteurs').closest('.card').querySelector('.kpi-sub span:last-child');
-          if (farmersSubtitle) {
-            farmersSubtitle.textContent = `Actifs cette saison`;
-          }
+
+        const productionCtx = document.getElementById('productionChart');
+        if (productionCtx && window.Chart) {
+          const labels = data.culturesLabels || [];
+          const values = data.culturesData || [];
+          new Chart(productionCtx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Production (kg)',
+                data: values,
+                backgroundColor: '#059669',
+                borderRadius: 6,
+                barPercentage: 0.6,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } }
+            }
+          });
         }
-        
-        // Lancer le calcul au chargement de la page
-        calculateDashboardMetrics();
-        
-        // Recalculer toutes les 30 secondes pour avoir des données à jour
-        setInterval(calculateDashboardMetrics, 30000);
-        
-        // Écouter les changements dans le localStorage (si d'autres onglets modifient les données)
-        window.addEventListener('storage', function(e) {
-          if (e.key === 'total_recolte_senebi' || e.key.startsWith('prix_')) {
-            console.log('🔄 Changement détecté dans localStorage, recalcul des métriques...');
-            calculateDashboardMetrics();
-          }
-        });
-        
-        console.log('🚀 Script d\'automatisation du Dashboard Manager chargé avec succès');
+
+        const alertsCtx = document.getElementById('alertsChart');
+        if (alertsCtx && window.Chart) {
+          const labels = [];
+          const values = [];
+          const colors = [];
+          const map = data.alertesParType || {};
+          if (map.stock_critique) { labels.push('Stock critique'); values.push(map.stock_critique); colors.push('#ef4444'); }
+          if (map.faible_rentabilite) { labels.push('Faible rentabilité'); values.push(map.faible_rentabilite); colors.push('#f59e0b'); }
+          if (map.faible_activite) { labels.push('Faible activité'); values.push(map.faible_activite); colors.push('#3b82f6'); }
+          new Chart(alertsCtx, {
+            type: 'doughnut',
+            data: {
+              labels,
+              datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '60%',
+              plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 12 } } }
+            }
+          });
+        }
       });
     </script>
     
@@ -802,7 +800,50 @@ Tous les indicateurs sont bons.
           }, 100 * (index + 1));
         });
         
-console.log("✅ Dashboard manager entièrement initialisé");
+        // Risk Farmers Filter
+        const filterTabs = document.querySelectorAll('.risk-filter-tab');
+        const riskCards = document.querySelectorAll('.risk-card--premium');
+        
+        // Calculate risk counts
+        const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+        riskCards.forEach(card => {
+          const level = card.dataset.riskLevel;
+          if (counts.hasOwnProperty(level)) counts[level]++;
+        });
+        document.getElementById('count-critical').textContent = counts.critical;
+        document.getElementById('count-high').textContent = counts.high;
+        document.getElementById('count-medium').textContent = counts.medium;
+        document.getElementById('count-low').textContent = counts.low;
+        
+        // Animate risk cards on load
+        riskCards.forEach((card, index) => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(16px)';
+          setTimeout(() => {
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, 50 * index);
+        });
+        
+        filterTabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            riskCards.forEach(card => {
+              if (filter === 'all') {
+                card.style.display = '';
+              } else {
+                const cardLevel = card.dataset.riskLevel;
+                card.style.display = (cardLevel === filter) ? '' : 'none';
+              }
+            });
+          });
+        });
+        
+        console.log("✅ Dashboard manager entièrement initialisé");
       });
     </script>
   </body>

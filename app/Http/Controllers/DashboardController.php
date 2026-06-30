@@ -40,16 +40,45 @@ class DashboardController extends Controller
         
         // Statistiques récoltes
         $totalRecoltes = Recolte::count();
-        
+        $totalQuantiteRecoltee = Recolte::sum('quantite');
+        $totalCA = Recolte::sum('revenu_total');
+
         // Dernières visites
         $recentVisits = Visite::with('user')->latest()->take(5)->get();
-        
+
         // Alertes stocks critiques
         $stockAlerts = Stock::with('user')
             ->whereColumn('quantite_actuelle', '<=', 'seuil_critique')
             ->latest()
             ->take(5)
             ->get();
+
+        // Production par culture
+        $productionParCulture = Recolte::select('culture', \Illuminate\Support\Facades\DB::raw('SUM(quantite) as total_quantite'))
+            ->groupBy('culture')
+            ->orderByDesc('total_quantite')
+            ->get();
+
+        // Répartition des alertes
+        $alertesParType = [
+            'stock_critique' => Stock::whereColumn('quantite_actuelle', '<=', 'seuil_critique')->count(),
+            'faible_rentabilite' => User::where('role', 'client')
+                ->where('is_active', true)
+                ->where('status', 'approved')
+                ->whereHas('recoltes', function ($query) {
+                    $query->where('benefice_net', '<', 0);
+                })
+                ->distinct()
+                ->count(),
+            'faible_activite' => User::where('role', 'client')
+                ->where('is_active', true)
+                ->where('status', 'approved')
+                ->whereHas('visites', function ($query) {
+                    $query->where('date_visite', '<', now()->subMonths(2));
+                })
+                ->distinct()
+                ->count(),
+        ];
 
         // Top Performance - Clients approuvés avec leurs récoltes
         $topClients = User::where('role', 'client')
@@ -155,12 +184,16 @@ class DashboardController extends Controller
             'totalStocks',
             'criticalStocks',
             'totalRecoltes',
+            'totalQuantiteRecoltee',
+            'totalCA',
             'recentVisits',
             'stockAlerts',
             'topClients',
             'atRiskFarmers',
             'recentActivities',
-            'recommendations'
+            'recommendations',
+            'productionParCulture',
+            'alertesParType'
         ));
     }
 }

@@ -15,8 +15,10 @@
 --good: #16a34a;
    --warn: #f59e0b;
    --warn-soft: #fef3c7;
-   --danger: #ef4444;
-  --fs-title: 26px;
+--danger: #ef4444;
+   --danger-soft: #fef2f2;
+   --good-soft: #dcfce7;
+   --fs-title: 26px;
   --fs-subtitle: 14px;
   --fs-section: 16px;
   --fs-body: 13px;
